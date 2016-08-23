@@ -155,9 +155,7 @@ public class GoUI {
     public void resetGameState() {
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                System.out.print("resetGameState called");
                 this.gameState[i][j] = 0;
-                System.out.println(this.gameState[i][j]);
             }
         }
         drawState();
@@ -177,9 +175,88 @@ public class GoUI {
                         }
                     }
                 }
-                return moveIndex;
+
+               return moveIndex;
             }
         }
+    }
+
+    public boolean checkSelfCapture(Index index) {
+        boolean result = false;
+        int i  = index.x;
+        int j = index.y;
+        if (i > 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] == 1 && gameState[i - 1][j] == 2
+                && gameState[i + 1][j] == 2 && gameState[i][j - 1] == 2
+                && gameState[i][j + 1] == 2) {
+            result = true;
+        } else if (i > 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] == 2 && gameState[i - 1][j] == 1
+                && gameState[i + 1][j] == 1 && gameState[i][j - 1] == 1
+                && gameState[i][j + 1] == 1) {
+            result = true;
+        } else if (i == 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] == 1
+                && gameState[i + 1][j] == 2 && gameState[i][j - 1] == 2
+                && gameState[i][j + 1] == 2) {
+            result = true;
+        } else if (i == 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] == 2
+                && gameState[i + 1][j] == 1 && gameState[i][j - 1] == 1
+                && gameState[i][j + 1] == 1) {
+            result = true;
+        } else if (i > 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] == 1 && gameState[i - 1][j] == 2
+                && gameState[i + 1][j] == 2
+                && gameState[i][j + 1] == 2) {
+            result = true;
+        } else if (i > 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] == 2 && gameState[i - 1][j] == 1
+                && gameState[i + 1][j] == 1
+                && gameState[i][j + 1] == 1) {
+            result = true;
+        } else if (i > 0 && j > 0 && i == boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] == 1 && gameState[i - 1][j] == 2
+                && gameState[i][j - 1] == 2
+                && gameState[i][j + 1] == 2) {
+            result = true;
+        } else if (i > 0 && j > 0 && i == boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] == 2 && gameState[i - 1][j] == 1
+                && gameState[i][j - 1] == 1
+                && gameState[i][j + 1] == 1) {
+            result = true;
+        } else if (i > 0 && j > 0 && i < boardSize - 1 && j == boardSize - 1
+                && gameState[i][j] == 1 && gameState[i - 1][j] == 2
+                && gameState[i + 1][j] == 2 && gameState[i][j - 1] == 2) {
+            result = true;
+        } else if (i > 0 && j > 0 && i < boardSize - 1 && j == boardSize - 1
+                && gameState[i][j] == 2 && gameState[i - 1][j] == 1
+                && gameState[i + 1][j] == 1 && gameState[i][j - 1] == 1) {
+            result = true;
+        }
+        else if (i > 0 && j == 0 && i == boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] ==  1 && gameState[i-1][j] == 2
+                && gameState[i][j + 1] == 2) {
+            result = true;
+        }
+        else if (i > 0 && j == 0 && i == boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] ==  2 && gameState[i-1][j] == 1
+                && gameState[i][j + 1] == 1) {
+            result = true;
+        }
+        else if (i == 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] ==  1
+                && gameState[i + 1][j] == 2
+                && gameState[i][j + 1] == 2) {
+            result = true;
+        }
+        else if (i == 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
+                && gameState[i][j] ==  2
+                && gameState[i + 1][j] == 1
+                && gameState[i][j + 1] == 1) {
+            result = true;
+        }
+        return result;
     }
 
 
@@ -200,8 +277,8 @@ public class GoUI {
             updateGameState();
             hoverStatus = false;
             moveButton = (JButton)e.getSource();
-            Arrays.asList(buttonArray).indexOf(this);
             waitingForTurn = false;
+
         }
 
         public void mousePressed(MouseEvent e) {
