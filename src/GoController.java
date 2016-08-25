@@ -94,10 +94,10 @@ public class GoController {
             }
 
             if (!changeHappened) {
-               if (!(rowDec >= rowMin && rowDec <= rowMax)
-                       || !(rowInc >= rowMin && rowInc <= rowMax)
-                       || !(colDec >= colMin && colDec <= colMax)
-                       || !(colInc >= colMin && colInc <= colMax) )
+               if (!((rowDec > rowMin && rowDec < rowMax) || isIn(cycleNodes, new Index(rowDec, col)))
+                       || !((rowInc > rowMin && rowInc < rowMax) || isIn(cycleNodes, new Index(rowInc, col)))
+                       || !((colDec > colMin && colDec < colMax) || isIn(cycleNodes, new Index(row, colDec)))
+                       || !((colInc > colMin && colInc < colMax) || isIn(cycleNodes, new Index(row, colDec))))
                    return false;
                else return true;
             }
@@ -288,16 +288,27 @@ public class GoController {
     }
 
     public static boolean dfsMod(Index node, Index root, int id) {
+        boolean hasUndiscoveredNeighbor = false;
         discovered.add(node);
         cycleNodes.add(node);
 
-        if (discovered.size() > 1 && (((root.y - 1) < 0 && (node.y - 1) < 0) || ((root.x - 1) < 0 && (node.x - 1) < 0)
+        for (Index i : getAdjacent(node, id)) {
+            if (!isIn(discovered, i)) {
+                hasUndiscoveredNeighbor = true;
+                System.out.println("TRUE");
+                break;
+            }
+        }
+
+        if (!hasUndiscoveredNeighbor && discovered.size() > 1 &&
+                (((root.y - 1) < 0 && (node.y - 1) < 0) || ((root.x - 1) < 0 && (node.x - 1) < 0)
                 || ((root.y + 1) >= boardSize && (node.y + 1) >= boardSize)
                 || ((root.x + 1) >= boardSize && (node.x + 1) >= boardSize)
                 || ((root.y - 1) < 0 && (node.x - 1) < 0)
                 || ((root.x - 1) < 0 && (node.y + 1) >= boardSize)
                 || ((root.y + 1) >= boardSize && (node.x + 1) >= boardSize)
                 || ((root.x + 1) >= boardSize && (node.y - 1) < 0))) {
+            System.out.println("Root: " + root.x + "," + root.y + "==>" + node.x + "," + node.y);
             for (Index i : cycleNodes) {
                 //System.out.println(root.x + " " + root.y + " " + "TEST BOUNDS: " + i.x + i.y);
                 if (rowMin > i.x) {
@@ -351,11 +362,13 @@ public class GoController {
         cycleNodes.clear();
 
         checkCapture = dfsMod(root, root, id);
+        System.out.println("Open cycle detected: " + rowMin + " " + rowMax + " " + colMin + " " + colMax);
         if (rowMin == 0 && colMin == 0) {
             for (int k = rowMin; k < rowMax; k++) {
                 for (int l = colMin; l < colMax; l++) {
                     if (gameState[k][l] == 0 && isInCycle(k, l, cycleNodes, id)) {
                         checkFullMod = false;
+                        System.out.println("1 Checkfull for :" + rowMin + " " + rowMax + " " + colMin + " " + colMax + " unsuccessful");
                     }
                 }
             }
@@ -364,6 +377,7 @@ public class GoController {
                 for (int l = colMin + 1; l < colMax; l++) {
                     if (gameState[k][l] == 0 && isInCycle(k, l, cycleNodes, id)) {
                         checkFullMod = false;
+                        System.out.println("2 Checkfull for :" + rowMin + " " + rowMax + " " + colMin + " " + colMax + " unsuccessful");
                     }
                 }
             }
@@ -372,6 +386,7 @@ public class GoController {
                 for (int l = colMin + 1; l <= colMax; l++) {
                     if (gameState[k][l] == 0 && isInCycle(k, l, cycleNodes, id)) {
                         checkFullMod = false;
+                        System.out.println("3 Checkfull for :" + rowMin + " " + rowMax + " " + colMin + " " + colMax + " unsuccessful");
                     }
                 }
             }
@@ -380,6 +395,7 @@ public class GoController {
                 for (int l = colMin + 1; l <= colMax; l++) {
                     if (gameState[k][l] == 0 && isInCycle(k, l, cycleNodes, id)) {
                         checkFullMod = false;
+                        System.out.println("4 Checkfull for :" + rowMin + " " + rowMax + " " + colMin + " " + colMax + " unsuccessful");
                     }
                 }
             }
@@ -388,6 +404,7 @@ public class GoController {
                 for (int l = colMin + 1; l <= colMax; l++) {
                     if (gameState[k][l] == 0 && isInCycle(k, l, cycleNodes, id)) {
                         checkFullMod = false;
+                        System.out.println("5 Checkfull for :" + rowMin + " " + rowMax + " " + colMin + " " + colMax + " unsuccessful");
                     }
                 }
             }
@@ -396,6 +413,7 @@ public class GoController {
                 for (int l = colMin + 1; l < colMax; l++) {
                     if (gameState[k][l] == 0 && isInCycle(k, l, cycleNodes, id)) {
                         checkFullMod = false;
+                        System.out.println("6 Checkfull for :" + rowMin + " " + rowMax + " " + colMin + " " + colMax + " unsuccessful");
                     }
                 }
             }
@@ -404,6 +422,7 @@ public class GoController {
                 for (int l = colMin; l < colMax; l++) {
                     if (gameState[k][l] == 0 && isInCycle(k, l, cycleNodes, id)) {
                         checkFullMod = false;
+                        System.out.println("7 Checkfull for :" + rowMin + " " + rowMax + " " + colMin + " " + colMax + " unsuccessful");
                     }
                 }
             }
@@ -412,6 +431,7 @@ public class GoController {
                 for (int l = colMin; l < colMax; l++) {
                     if (gameState[k][l] == 0 && isInCycle(k, l, cycleNodes, id)) {
                         checkFullMod = false;
+                        System.out.println("8 Checkfull for :" + rowMin + " " + rowMax + " " + colMin + " " + colMax + " unsuccessful");
                         }
                 }
             }
@@ -460,6 +480,7 @@ public class GoController {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 } else if (i == 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
                         && gameState[i][j] == op
                         && gameState[i + 1][j] == id && gameState[i][j - 1] == id
@@ -467,6 +488,7 @@ public class GoController {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 } else if (i > 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
                         && gameState[i][j] == op && gameState[i - 1][j] == id
                         && gameState[i + 1][j] == id
@@ -474,6 +496,7 @@ public class GoController {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 } else if (i > 0 && j > 0 && i == boardSize - 1 && j < boardSize - 1
                         && gameState[i][j] == op && gameState[i - 1][j] == id
                         && gameState[i][j - 1] == id
@@ -481,30 +504,35 @@ public class GoController {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 } else if (i > 0 && j > 0 && i < boardSize - 1 && j == boardSize - 1
                         && gameState[i][j] == op && gameState[i - 1][j] == id
                         && gameState[i + 1][j] == id && gameState[i][j - 1] == id) {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 } else if (i == 0 && j > 0 && i < boardSize - 1 && j == boardSize - 1
                         && gameState[i][j] == op
                         && gameState[i + 1][j] == id && gameState[i][j - 1] == id) {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 } else if (i > 0 && j > 0 && i == boardSize - 1 && j == boardSize - 1
                         && gameState[i][j] == op && gameState[i - 1][j] == id
                         && gameState[i + 1][j] == id && gameState[i][j - 1] == id) {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 } else if (i > 0 && j == 0 && i == boardSize - 1 && j < boardSize - 1
                         && gameState[i][j] == op && gameState[i - 1][j] == id
                         && gameState[i][j + 1] == id) {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 } else if (i == 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
                         && gameState[i][j] == op
                         && gameState[i + 1][j] == id
@@ -512,6 +540,7 @@ public class GoController {
                     System.out.println("1: " + i + " " + j);
                     gameState[i][j] = 0;
                     ui.setGameState(gameState);
+                    System.out.println("Simple capture check");
                 }
             }
         }
