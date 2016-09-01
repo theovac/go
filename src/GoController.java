@@ -575,15 +575,14 @@ public class GoController {
         }
     }
 
-    public static void simpleCaptureCheck() {
-        int op, id;
+    public static void simpleCaptureCheck(int id) {
+        int op;
         op = 0;
-        id = 0;
         System.out.println("Simple capture check called");
         updateGameState(ui.getGameState());
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                id = gameState[i][j];
+
                 if (id != 0) {
                     if (id == 2) {
                         op = 1;
@@ -744,9 +743,10 @@ public class GoController {
                 }
             }
 
-            simpleCaptureCheck();
             captureCheck(1);
+            simpleCaptureCheck(2);
             captureCheck(2);
+            simpleCaptureCheck(1);
 
             whiteTurn = ui.getTurn(2);
 
@@ -774,9 +774,10 @@ public class GoController {
                 }
 
             }
-            simpleCaptureCheck();
             captureCheck(2);
+            simpleCaptureCheck(1);
             captureCheck(1);
+            simpleCaptureCheck(2);
         }
     }
 }

@@ -1,5 +1,0 @@
-- Choose a start node
-- Use Depth First search to find a closed cycle of stones
-- While executing DFS find the min and max row and column index 
-  for the stone cycle.
-- Remove all white stones whose indices are between the min, max	  values we found before.
