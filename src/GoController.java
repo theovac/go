@@ -97,7 +97,7 @@ public class GoController {
                if (isIn(cycleNodes, new Index(row, col)) || !(isIn(cycleNodes, new Index(rowDec, col))
                        && isIn(cycleNodes, new Index(rowInc, col))
                        && isIn(cycleNodes, new Index(row, colDec))
-                       && isIn(cycleNodes, new Index(row, colDec))))
+                       && isIn(cycleNodes, new Index(row, colInc))))
                    return false;
                else return true;
             }
@@ -291,16 +291,6 @@ public class GoController {
 
     }
 
-    private static boolean isIn(Vector<Index> v, Index i) {
-        for (Index ind : v) {
-            if (ind.x == i.x && ind.y == i.y) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public static boolean dfs(Index node, Index root, int id) {
         Vector<Index> temp = new Vector<>();
         if (!(node.x == root.x && node.y == root.y)) {
@@ -481,11 +471,7 @@ public class GoController {
             for (int k = rowMin; k < rowMax; k++) {
                 for (int l = colMin; l < colMax; l++) {
                     if (isInCycleMod(k, l, cycleNodes)) {
-                        System.out.println(k + " " + l + " is in cycle");
-                        System.out.println("Open cycle detected: " + rowMin + " " + rowMax + " " + colMin + " " + colMax);
                     } else {
-                        System.out.println(k + " " + l + " is not in cycle");
-                        System.out.println("Open cycle detected: " + rowMin + " " + rowMax + " " + colMin + " " + colMax);
                     }
                     if (gameState[k][l] == 0 && isInCycleMod(k, l, cycleNodes)) {
                         checkFullMod = false;
@@ -714,8 +700,20 @@ public class GoController {
         }
     }
 
+    private static boolean isIn(Vector<Index> v, Index i) {
+        for (Index ind : v) {
+            if (ind.x == i.x && ind.y == i.y) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     public static void main(String args[]) {
         GoController controller = new GoController();
+        GoAI computer = new GoAI(controller, 2, 3);
 
         gameState = new int[boardSize][boardSize];
         Random rn = new Random();
@@ -726,30 +724,12 @@ public class GoController {
         //        gameState[i][j] = rn.nextInt(3);
         //    }
         //}
-
+        gameState[0][0] = 0;
+        gameState[2][1] = 0;
         gameState[3][2] = 2;
-        gameState[4][1] = 2;
-        gameState[5][2] = 2;
-        gameState[5][3] = 2;
-        gameState[6][4] = 2;
-        gameState[5][5] = 2;
-        gameState[8][6] = 2;
-        gameState[3][5] = 2;
-        gameState[3][4] = 2;
-        gameState[3][3] = 2;
-        gameState[6][5] = 2;
-        gameState[7][5] = 2;
-        gameState[4][2] = 1;
-        gameState[4][3] = 1;
-        gameState[4][4] = 1;
-        gameState[4][5] = 1;
-        gameState[5][4] = 1;
-        gameState[2][4] = 1;
-        gameState[1][5] = 1;
-        gameState[7][6] = 2;
-        gameState[1][5] = 2;
-        gameState[1][7] = 2;
-        gameState[2][6] = 2;
+        gameState[2][3] = 0;
+        gameState[1][2] = 0;
+        gameState[2][2] = 0;
 
 
         ui.setGameState(gameState);
@@ -758,6 +738,7 @@ public class GoController {
         //clearArea(3, 6, 1, 6, 2);
 
 
+        computer.getMove();
 
         while (true) {
             Index blackTurn, whiteTurn;
@@ -817,7 +798,12 @@ public class GoController {
             captureCheck(2);
             simpleCaptureCheck(1);
 
-            whiteTurn = ui.getTurn(2);
+            //whiteTurn = ui.getTurn(2);
+            System.out.println("Getting turn.");
+            whiteTurn = computer.getMove();
+            gameState[whiteTurn.getX()][whiteTurn.gety()] = 2;
+            ui.setGameState(gameState);
+            System.out.println(whiteTurn.getX() + ", " + whiteTurn.gety());
 
             if (!((detectOpenCycle(whiteTurn.x, whiteTurn.y, 2)) || (detectCycle(whiteTurn.x, whiteTurn.y, 2)))) {
                 for (int i = 0; i < boardSize; i++) {

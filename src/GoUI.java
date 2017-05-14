@@ -8,6 +8,7 @@ import java.nio.Buffer;
 import java.util.Arrays;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+
 public class GoUI {
 
     BufferedImage blackImg, whiteImg;
@@ -39,10 +40,15 @@ public class GoUI {
         loadImages();
         JFrame mainFrame = new JFrame("GO");
         mainFrame.getContentPane().setLayout(new BorderLayout());
-        mainFrame.setContentPane(new JPanel() { BufferedImage image = ImageIO.read(new URL("http://go.alamino.net/aprendajogargo/images/Blank_Go_board_9x9.png")); public void paintComponent(Graphics g) { super.paintComponent(g); g.drawImage(image.getScaledInstance(600, 600, image.SCALE_DEFAULT), 0, 0, 600, 600, this);
+        mainFrame.setContentPane(new JPanel() { BufferedImage image =
+                ImageIO.read(new URL("http://go.alamino.net/aprendajogargo/images/Blank_Go_board_9x9.png"));
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            g.drawImage(image.getScaledInstance(
+                    600, 600, image.SCALE_DEFAULT), 0, 0, 600, 600, this);
             }
-        });
 
+        });
 
         interBhv(mainFrame);
         JMenuBar menuBar = createMenuBar();
@@ -71,7 +77,6 @@ public class GoUI {
             public void actionPerformed(ActionEvent e) {
                 resetGameState();
             }
-            //TODO: Make restart button reset the gameState.
         });
 
         JMenuItem quit = new JMenuItem("Quit");
