@@ -712,7 +712,7 @@ public class GoController {
 
 
     public static void main(String args[]) {
-        GoController controller = new GoController();
+        Controller controller = new Controller();
         GoAI computer = new GoAI(controller, 2, 3);
 
         gameState = new int[boardSize][boardSize];

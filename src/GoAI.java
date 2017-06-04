@@ -9,12 +9,12 @@ import java.util.*;
  * determined using the alpha-beta pruning algorithm.
  */
 public class GoAI {
-    protected GoController controller;
+    protected Controller controller;
     protected static int colorID;
     protected static int opponentColorID;
     protected int depth;
 
-    public GoAI(GoController controller, int colorID, int depth) {
+    public GoAI(Controller controller, int colorID, int depth) {
         this.controller = controller;
         this.colorID = colorID;
         if (colorID == 1) {
@@ -191,7 +191,7 @@ public class GoAI {
         return new GetConnectedResult(libertyCount, connectedStones);
     }
 
-    private final class CheckCaptureResult {
+    public static final class CheckCaptureResult {
         private final int libertyCount;
         private final Set<BoardPosition> stoneGroup;
 
@@ -205,7 +205,7 @@ public class GoAI {
         public Set<BoardPosition> getStoneGroup() { return this.stoneGroup; }
     }
 
-    private class BoardPosition {
+    public static class BoardPosition {
         private int row, col;
 
         public BoardPosition(int row, int col) {
@@ -226,7 +226,7 @@ public class GoAI {
     }
 
     /* Performs BFS search to find liberties. If no liberties are found the stone group is captured. */
-    private CheckCaptureResult checkCapture(BoardPosition root, int[][] gameState) {
+    public CheckCaptureResult checkCapture(BoardPosition root, int[][] gameState) {
         int libertyCount = 0;
         LinkedList<BoardPosition> fifo = new LinkedList<>();
         Set<BoardPosition> visited = new HashSet<>();

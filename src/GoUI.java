@@ -111,7 +111,7 @@ public class GoUI {
         mainFrame.add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    public void drawState() {
+    private void drawState() {
        for (int i = 0; i < boardSize; i++) {
            for (int j = 0; j < boardSize; j++) {
                if (this.gameState[i][j] == 1) {
