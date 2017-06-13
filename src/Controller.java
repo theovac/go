@@ -9,6 +9,8 @@ public class Controller {
     public static void main(String args[]) {
         Controller controller = new Controller();
         GoUI ui = new GoUI(9);
+        GoRules rules = new GoRules();
+        GoAI ai = new GoAI(controller, 2, 2);
         controller.gameState = ui.getGameState();
         controller.gameState[1][1] = 1;
         controller.gameState[2][0] = 1;
@@ -19,17 +21,17 @@ public class Controller {
         controller.gameState[3][1] = 2;
         controller.gameState[2][1] = 2;
         ui.setGameState(controller.gameState);
-        GoAI ai = new GoAI(controller, 2, 2);
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                GoAI.CheckCaptureResult result = ai.checkCapture(new GoAI.BoardPosition(i, j), controller.gameState);
-                System.out.println(result.getStoneGroup());
-                for (GoAI.BoardPosition captured : result.getStoneGroup()) {
-                    System.out.println(captured.getRow() + ", " + captured.getCol());
-                    controller.gameState[captured.getRow()][captured.getCol()] = 0;
-                    ui.setGameState(controller.gameState);
-                }
-            }
+
+        rules.stoneCapture(controller.gameState);
+        ui.setGameState(controller.gameState);
+        while(true) {
+            ui.getTurn(1);
+            rules.stoneCapture(controller.gameState);
+            ui.setGameState(controller.gameState);
+            GoRules.BoardPosition move = ai.getMove();
+            controller.gameState[move.getRow()][move.getCol()] = 2;
+            rules.stoneCapture(controller.gameState);
+            ui.setGameState(controller.gameState);
         }
     }
 }

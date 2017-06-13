@@ -13,6 +13,7 @@ public class GoAI {
     protected static int colorID;
     protected static int opponentColorID;
     protected int depth;
+    private GoRules rules;
 
     public GoAI(Controller controller, int colorID, int depth) {
         this.controller = controller;
@@ -21,12 +22,13 @@ public class GoAI {
             this.opponentColorID = 2;
         } else { this.opponentColorID = 1; }
         this.depth = depth;
+        rules = new GoRules();
     }
 
     /* Alpha-beta search tree node structure. */
     private abstract static class Node {
         protected double value;
-        protected BoardPosition move = null; // The stone placement this Node represents.
+        protected GoRules.BoardPosition move = null; // The stone placement this Node represents.
         private int[][] gameState = null;
         private Node parent = null;
         private List<Node> children = null;
@@ -36,7 +38,7 @@ public class GoAI {
 
         public void setValue(double value) { this.value = value; }
 
-        public abstract void setMove(BoardPosition move);
+        public abstract void setMove(GoRules.BoardPosition move);
 
         public void setGameState(int[][] gameState) {this.gameState = gameState; }
 
@@ -48,7 +50,7 @@ public class GoAI {
 
         public double getValue() { return this.value; }
 
-        public BoardPosition getMove() { return this.move; }
+        public GoRules.BoardPosition getMove() { return this.move; }
 
         public int[][] getGameState() { return this.gameState; }
 
@@ -82,7 +84,7 @@ public class GoAI {
             super.value = Double.NEGATIVE_INFINITY;
         }
 
-        public void setMove(BoardPosition move) {
+        public void setMove(GoRules.BoardPosition move) {
             this.move = move;
             int[][] gameState = this.getParent().getGameState().clone();
             int[][] nextGameState = new int[gameState.length][gameState.length];
@@ -117,7 +119,7 @@ public class GoAI {
             super.value = Double.POSITIVE_INFINITY;
         }
 
-        public void setMove(BoardPosition move) {
+        public void setMove(GoRules.BoardPosition move) {
             this.move = move;
             int[][] gameState = this.getParent().getGameState().clone();
             int[][] nextGameState = new int[gameState.length][gameState.length];
@@ -146,128 +148,6 @@ public class GoAI {
         }
     }
 
-    private final class GetConnectedResult {
-        private final int libertyCount;
-        private final List<BoardPosition> connectedStones;
-
-        public GetConnectedResult(int libertyCount, List<BoardPosition> connectedStones) {
-            this.libertyCount = libertyCount;
-            this.connectedStones = connectedStones;
-        }
-
-        public int getLibertyCount() { return this.libertyCount; }
-
-        public List<BoardPosition> getConnectedStones() { return this.connectedStones; }
-    }
-
-    /* Finds connected stones of the same color. */
-    private GetConnectedResult getConnected(BoardPosition pos, int[][] gameState) {
-        List<BoardPosition> connectedPositions = new ArrayList<BoardPosition>() {
-            {
-                add(new BoardPosition(pos.getRow()+1, pos.getCol()));
-                add(new BoardPosition(pos.getRow(), pos.getCol()+1));
-                add(new BoardPosition(pos.getRow()-1, pos.getCol()));
-                add(new BoardPosition(pos.getRow(), pos.getCol()-1));
-            }
-        };
-        List<BoardPosition> connectedStones = new ArrayList<BoardPosition>();
-        int libertyCount = 0;
-
-        for (BoardPosition conPos : connectedPositions) {
-            if (conPos.getRow() < gameState.length &&
-                    conPos.getCol() < gameState.length &&
-                    conPos.getRow() >= 0 && conPos.getCol() >= 0) {
-                if (gameState[conPos.getRow()][conPos.getCol()] == gameState[pos.getRow()][pos.getCol()]) {
-                    connectedStones.add(conPos);
-                } else if (gameState[conPos.getRow()][conPos.getCol()] == 0) {
-                    libertyCount += 1;
-                }
-            }
-        } /*
-        System.out.println("\n" + pos.getRow() + ", " + pos.getCol() + ":");
-        for (BoardPosition stone : connectedStones) {
-            System.out.print(stone.getRow() + ", " + stone.getCol());
-        } */
-        return new GetConnectedResult(libertyCount, connectedStones);
-    }
-
-    public static final class CheckCaptureResult {
-        private final int libertyCount;
-        private final Set<BoardPosition> stoneGroup;
-
-        public CheckCaptureResult(int libertyCount, Set<BoardPosition> stoneGroup) {
-            this.libertyCount = libertyCount;
-            this.stoneGroup = stoneGroup;
-        }
-
-        public int getLibertyCount() { return this.libertyCount; }
-
-        public Set<BoardPosition> getStoneGroup() { return this.stoneGroup; }
-    }
-
-    public static class BoardPosition {
-        private int row, col;
-
-        public BoardPosition(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        public int getRow() { return this.row; }
-
-        public int getCol() { return this.col; }
-    }
-
-    private boolean findBoardPosition(Set<BoardPosition> positionList, BoardPosition position) {
-        for (BoardPosition el : positionList) {
-            if (el.getRow() == position.getRow() && el.getCol() == position.getCol()) return true;
-        }
-        return false;
-    }
-
-    /* Performs BFS search to find liberties. If no liberties are found the stone group is captured. */
-    public CheckCaptureResult checkCapture(BoardPosition root, int[][] gameState) {
-        int libertyCount = 0;
-        LinkedList<BoardPosition> fifo = new LinkedList<>();
-        Set<BoardPosition> visited = new HashSet<>();
-        BoardPosition current;
-        int colorID = gameState[root.getRow()][root.getCol()];
-        fifo.add(root);
-
-        while (!fifo.isEmpty()) {
-            current = fifo.removeFirst();
-            visited.add(current);
-            libertyCount = libertyCount + getConnected(current, gameState).getLibertyCount();
-            for (BoardPosition connected : getConnected(current, gameState).getConnectedStones()) {
-                if (!findBoardPosition(visited, connected)) {
-                    fifo.add(connected);
-                }
-            }
-        }
-
-        return new CheckCaptureResult(libertyCount, visited);
-    }
-
-    /* Checks if a move is valid based on Go rules. */
-    private boolean isValidMove(BoardPosition move, int colorID, int[][] gameState) {
-        int[][] nextGameState = new int[gameState.length][gameState.length];
-        for (int i = 0; i < gameState.length; i++) {
-            for (int j = 0; j < gameState.length; j++) {
-                nextGameState[i][j] = gameState[i][j];
-            }
-        }
-
-        /* The position where the player wants to place a stone is empty. */
-        if (gameState[move.getRow()][move.getCol()] != 0) return false;
-
-        /* The move does not cause current player's stones to be captured. */
-        nextGameState[move.getRow()][move.getCol()] = colorID;
-        if (checkCapture(move, nextGameState).getLibertyCount() == 0) return false;
-
-        /* TODO: The move does not lead to the same game state as after the current player's previous turn. */
-        return true;
-    }
-
     /* Construct the root node of the alpha-bet search tree by setting the parent and children for each node. */
     private Node makeTree() {
         int[][] gameState = controller.gameState;
@@ -282,7 +162,7 @@ public class GoAI {
             List<Node> children = new ArrayList<>();
             for (int i = 0; i < currentNode.getGameState().length; i++) {
                 for (int j = 0; j < currentNode.getGameState().length; j++) {
-                    if (isValidMove(new BoardPosition(i, j), this.colorID, currentNode.getGameState())) {
+                    if (rules.isValidMove(new GoRules.BoardPosition(i, j), this.colorID, currentNode.getGameState())) {
                         Node childNode;
                         if (currentNode.getClass().getName().equals("GoAI$Maximizer")) {
                             childNode = new Minimizer();
@@ -290,7 +170,7 @@ public class GoAI {
                             childNode = new Maximizer();
                         }
                         childNode.setParent(currentNode);
-                        childNode.setMove(new BoardPosition(i, j));
+                        childNode.setMove(new GoRules.BoardPosition(i, j));
                         children.add(childNode);
                         searchQueue.add(childNode);
                         System.out.println(childNode.getDepth());
@@ -304,8 +184,8 @@ public class GoAI {
 
     /* Capture stones as a result of the move this node represents and calculate score for each node. */
     protected int evaluate(Node current) {
-        CheckCaptureResult result;
-        GetConnectedResult connectedResult;
+        GoRules.CheckCaptureResult result;
+        GoRules.GetConnectedResult connectedResult;
         int score = 0;
         int colorID, opponentColorID;
 
@@ -325,19 +205,19 @@ public class GoAI {
                 * Substract half a point for every opponent liberty.
                 */
                 if (current.gameState[i][j] == opponentColorID) {
-                    result = checkCapture(new BoardPosition(i, j), current.getGameState());
+                    result = rules.checkCapture(new GoRules.BoardPosition(i, j), current.getGameState());
                     if ((!result.getStoneGroup().isEmpty()) && (result.getLibertyCount() == 0)) {
-                        for (BoardPosition captured : result.getStoneGroup()) {
+                        for (GoRules.BoardPosition captured : result.getStoneGroup()) {
                             current.getGameState()[captured.getRow()][captured.getCol()] = 0;
                             score += 100;
                         }
                     }
-                    connectedResult = getConnected(new BoardPosition(i, j), current.getGameState());
+                    connectedResult = rules.getConnected(new GoRules.BoardPosition(i, j), current.getGameState());
                     if (connectedResult.getLibertyCount() != 0) {
                         score = score - connectedResult.getLibertyCount() * 5;
                     }
                 } else if (current.gameState[i][j] == colorID) {
-                    connectedResult = getConnected(new BoardPosition(i, j), current.getGameState());
+                    connectedResult = rules.getConnected(new GoRules.BoardPosition(i, j), current.getGameState());
                     if (connectedResult.getLibertyCount() != 0) {
                         score = score + connectedResult.getLibertyCount() * 2;
                     }
@@ -351,7 +231,7 @@ public class GoAI {
         return score;
     }
 
-    public Index getMove() {
+    public GoRules.BoardPosition getMove() {
         Node searchTree = this.makeTree();
         double value = searchTree.alphabeta(this.depth, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         System.out.println("Max potential value: " + value);
@@ -359,7 +239,7 @@ public class GoAI {
             System.out.println(searchTree.getValue());
             System.out.println(child.getChildren().get(0).getValue());
             if (value == child.value) {
-                return new Index(child.getMove().getRow(), child.getMove().getCol());
+                return new GoRules.BoardPosition(child.getMove().getRow(), child.getMove().getCol());
             }
         }
         return null;

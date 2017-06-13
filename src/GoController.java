@@ -736,7 +736,7 @@ public class GoController {
 
 
         //clearArea(3, 6, 1, 6, 2);
-
+/*
 
         computer.getMove();
 
@@ -800,7 +800,6 @@ public class GoController {
 
             //whiteTurn = ui.getTurn(2);
             System.out.println("Getting turn.");
-            whiteTurn = computer.getMove();
             gameState[whiteTurn.getX()][whiteTurn.gety()] = 2;
             ui.setGameState(gameState);
             System.out.println(whiteTurn.getX() + ", " + whiteTurn.gety());
@@ -858,5 +857,6 @@ public class GoController {
             captureCheck(1);
             simpleCaptureCheck(2);
         }
+        */
     }
 }
