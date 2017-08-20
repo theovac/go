@@ -11,10 +11,12 @@ public class GoRules {
     public static final class GetConnectedResult {
         private final int libertyCount;
         private final List<BoardPosition> connectedStones;
+        private final List<BoardPosition> libertyPositions;
 
-        public GetConnectedResult(int libertyCount, List<BoardPosition> connectedStones) {
+        public GetConnectedResult(int libertyCount, List<BoardPosition> libertyPositions, List<BoardPosition> connectedStones) {
             this.libertyCount = libertyCount;
             this.connectedStones = connectedStones;
+            this.libertyPositions = libertyPositions;
         }
 
         public int getLibertyCount() {
@@ -24,10 +26,11 @@ public class GoRules {
         public List<BoardPosition> getConnectedStones() {
             return this.connectedStones;
         }
+        public List<BoardPosition> getLibertyPositions() { return this.libertyPositions; }
     }
 
     /* Finds connected stones of the same color. */
-    public GetConnectedResult getConnected(BoardPosition pos, int[][] gameState) {
+    public static GetConnectedResult getConnected(BoardPosition pos, int[][] gameState) {
         List<BoardPosition> connectedPositions = new ArrayList<BoardPosition>() {
             {
                 add(new BoardPosition(pos.getRow() + 1, pos.getCol()));
@@ -37,24 +40,23 @@ public class GoRules {
             }
         };
         List<BoardPosition> connectedStones = new ArrayList<BoardPosition>();
+        List<BoardPosition> libertyPositions = new ArrayList<BoardPosition>();
         int libertyCount = 0;
 
         for (BoardPosition conPos : connectedPositions) {
             if (conPos.getRow() < gameState.length &&
                     conPos.getCol() < gameState.length &&
                     conPos.getRow() >= 0 && conPos.getCol() >= 0) {
-                if (gameState[conPos.getRow()][conPos.getCol()] == gameState[pos.getRow()][pos.getCol()]) {
+                if (gameState[pos.getRow()][pos.getCol()] != 0 &&
+                        gameState[conPos.getRow()][conPos.getCol()] == gameState[pos.getRow()][pos.getCol()]) {
                     connectedStones.add(conPos);
                 } else if (gameState[conPos.getRow()][conPos.getCol()] == 0) {
                     libertyCount += 1;
+                    libertyPositions.add(new BoardPosition(conPos.getRow(), conPos.getCol()));
                 }
             }
-        } /*
-        System.out.println("\n" + pos.getRow() + ", " + pos.getCol() + ":");
-        for (BoardPosition stone : connectedStones) {
-            System.out.print(stone.getRow() + ", " + stone.getCol());
-        } */
-        return new GetConnectedResult(libertyCount, connectedStones);
+        }
+        return new GetConnectedResult(libertyCount, libertyPositions, connectedStones);
     }
 
     public static final class CheckCaptureResult {
@@ -92,7 +94,7 @@ public class GoRules {
         }
     }
 
-    public boolean findBoardPosition(Set<BoardPosition> positionList, BoardPosition position) {
+    public static boolean findBoardPosition(Set<BoardPosition> positionList, BoardPosition position) {
         for (BoardPosition el : positionList) {
             if (el.getRow() == position.getRow() && el.getCol() == position.getCol()) return true;
         }
@@ -100,7 +102,7 @@ public class GoRules {
     }
 
     /* Performs BFS search to find liberties. If no liberties are found the stone group is captured. */
-    public CheckCaptureResult checkCapture(BoardPosition root, int[][] gameState) {
+    public static CheckCaptureResult checkCapture(BoardPosition root, int[][] gameState) {
         int libertyCount = 0;
         LinkedList<BoardPosition> fifo = new LinkedList<>();
         Set<BoardPosition> visited = new HashSet<>();
@@ -123,7 +125,7 @@ public class GoRules {
     }
 
     /* Checks if a move is valid based on Go rules. */
-    public boolean isValidMove(BoardPosition move, int colorID, int[][] gameState) {
+    public static boolean isValidMove(BoardPosition move, int colorID, int[][] gameState) {
         int[][] nextGameState = new int[gameState.length][gameState.length];
         for (int i = 0; i < gameState.length; i++) {
             for (int j = 0; j < gameState.length; j++) {
@@ -147,10 +149,8 @@ public class GoRules {
             for (int j = 0; j < 9; j++) {
                 if (gameState[i][j] != 0) {
                     CheckCaptureResult result = checkCapture(new BoardPosition(i, j), gameState);
-                    System.out.println(result.getStoneGroup());
                     if (result.getLibertyCount() == 0) {
                         for (BoardPosition captured : result.getStoneGroup()) {
-                            System.out.println(captured.getRow() + ", " + captured.getCol());
                             gameState[captured.getRow()][captured.getCol()] = 0;
                         }
                     }
