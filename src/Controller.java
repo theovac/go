@@ -1,4 +1,6 @@
 import javax.swing.tree.TreeNode;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,14 +49,44 @@ public class Controller {
                 ui.setGameState(controller.gameState);
             }
         }*/
+        int[][] nextState = new int[controller.gameState.length][controller.gameState.length];
+        Node bestNode;
+        Node childNode;
         while(true) {
             ui.getTurn(1);
             rules.stoneCapture(controller.gameState);
             ui.setGameState(controller.gameState);
             Node node = new Node(controller.gameState, 2);
-            List<MonteCarlo.Move> moves = mcts.generate_move(node, controller.gameState);
-            GoRules.BoardPosition move = moves.get(0).pos;
-            controller.gameState[move.getRow()][move.getCol()] = 2;
+            List<Node> children = new ArrayList<>();
+            List<MonteCarlo.Move> moves = mcts.generate_move(node);
+            for (MonteCarlo.Move move : moves) {
+                System.out.println(move.pos.getRow() + ", " + move.pos.getCol());
+                if (move != null) {
+                    for (int i = 0; i < controller.gameState.length; i++) {
+                        for (int j = 0; j < controller.gameState.length; j++) {
+                            nextState[i][j] = controller.gameState[i][j];
+                        }
+                    }
+                    nextState[move.pos.getRow()][move.pos.getCol()] = 2;
+                    childNode = new Node(nextState, 1);
+                    childNode.move = move;
+                    childNode.setParent(node);
+                    children.add(childNode);
+                }
+            }
+            node.setChildren(children);
+            bestNode = children.get(0);
+            for (Node child : node.children) {
+                for (int i = 0; i < 3; i++) {
+                    System.out.println("Iteration " + i);
+                    if (mcts.simulatePlayout(child)) {
+                        child.addWin();
+                    } else child.addLoss();
+                }
+                if (child.winrate > bestNode.winrate) bestNode = child;
+            }
+            controller.gameState[bestNode.move.pos.getRow()][bestNode.move.pos.getCol()] = 2;
+            System.out.println("Computer played");
             rules.stoneCapture(controller.gameState);
             ui.setGameState(controller.gameState);
         }
