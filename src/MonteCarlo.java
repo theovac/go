@@ -31,7 +31,7 @@ public class MonteCarlo {
     public List<Move> generate_move(Node node) {
         System.out.println("Generating move...");
         Random randGen = new Random();
-        Set<GoRules.BoardPosition> checked = new HashSet<>();
+        List<GoRules.BoardPosition> checked = new ArrayList<>();
         List<Move> moves = new ArrayList<>();
         List<GoRules.BoardPosition> skippedMoves = new ArrayList<>();
 
@@ -118,13 +118,18 @@ public class MonteCarlo {
                 }
             }
         }
-        // Play one of the random moves at random.
+        // Play some of the random moves at random.
         if (!randomMoves.isEmpty()) {
-            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
-            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
-            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
-            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
-            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
+            int maxMoveCount = 3;
+            if (randomMoves.size() < maxMoveCount) {
+                for (int i=0; i<randomMoves.size(); i++) {
+                    moves.add(new Move(randomMoves.get(i), 4));
+                }
+            } else {
+                for (int i = 0; i < maxMoveCount; i++) {
+                    moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
+                }
+            }
         }
 
         return moves;
@@ -189,30 +194,73 @@ public class MonteCarlo {
 
         System.out.println("Simulating...");
         int n_moves = 0;
-        GoUI testUI = new GoUI(9);
-        testUI.setGameState(currentState);
-        while (!(toPlayMove == null && lastPlayMove == null)) {
+        /* If a players captures only one opponent stone, then the opponent can't play in the
+           position of that stone. koMove is that position.
+         */
+        GoRules.BoardPosition koMove = new GoRules.BoardPosition(-1, -1);
+        List<GoRules.BoardPosition> toPlayCaptured = new ArrayList<>();
+        List<GoRules.BoardPosition> lastPlayCaptured = new ArrayList<>();
+        LinkedList<GoRules.BoardPosition> recentMoves = new LinkedList<GoRules.BoardPosition>();
+        for (int i=0; i<10; i++) {
+            recentMoves.add(new GoRules.BoardPosition(-1, -1));
+        }
+        while (!(toPlayMove == null || lastPlayMove == null)) {
             //System.out.println("Moves so far: " + n_moves);
             moves = generate_move(new Node(currentState, node.toPlayColor));
-            //System.out.println("Available moves for player 1: " + moves.size());
+            System.out.println("Available moves for player 1: " + moves.size());
             if (moves.size() > 0) {
                 toPlayMove = moves.get(0);
+                // Avoid move if move is ko.
+                if (toPlayMove.pos.getRow() == koMove.getRow() &&
+                        toPlayMove.pos.getCol() == koMove.getCol()) {
+                    if (moves.size() > 1) {
+                        toPlayMove = moves.get(1);
+                    } else toPlayMove = null;
+                }
+
+                if (toPlayMove != null && rules.findBoardPosition(recentMoves, toPlayMove.pos)) {
+                    toPlayMove = null;
+                }
+                recentMoves.removeLast();
+                if (toPlayMove == null) {
+                    recentMoves.addFirst(new GoRules.BoardPosition(-1, -1));
+                } else recentMoves.addFirst(toPlayMove.pos);
             } else toPlayMove = null;
             if (toPlayMove != null) {
                 currentState[toPlayMove.pos.getRow()][toPlayMove.pos.getCol()] = node.toPlayColor;
             }
-            rules.stoneCapture(currentState);
-            testUI.setGameState(currentState);
+            lastPlayCaptured = rules.stoneCapture(currentState);
+            if (lastPlayCaptured.size() == 1) {
+                koMove = lastPlayCaptured.get(0);
+            }
+
             moves = generate_move(new Node(currentState, lastPlayColor));
-            //System.out.println("Available moves for player 2: " + moves.size());
+            System.out.println("Available moves for player 2: " + moves.size());
             if (moves.size() > 0) {
                 lastPlayMove = moves.get(0);
+                if (lastPlayMove.pos.getRow() == koMove.getRow() &&
+                        lastPlayMove.pos.getCol() == koMove.getCol()) {
+                    if (moves.size() > 1) {
+                        lastPlayMove = moves.get(1);
+                    } else lastPlayMove = null;
+                }
+
+                if (lastPlayMove!= null && rules.findBoardPosition(recentMoves, lastPlayMove.pos)) {
+                    lastPlayMove = null;
+                }
+                recentMoves.removeLast();
+                if (lastPlayMove == null) {
+                    recentMoves.addFirst(new GoRules.BoardPosition(-1, -1));
+                } else recentMoves.addFirst(lastPlayMove.pos);
             } else lastPlayMove = null;
             if (lastPlayMove != null) {
                 currentState[lastPlayMove.pos.getRow()][lastPlayMove.pos.getCol()] = lastPlayColor;
             }
-            rules.stoneCapture(currentState);
-            testUI.setGameState(currentState);
+            toPlayCaptured = rules.stoneCapture(currentState);
+            if (toPlayCaptured.size() == 1) {
+                koMove = toPlayCaptured.get(0);
+            }
+
             n_moves++;
         }
 
