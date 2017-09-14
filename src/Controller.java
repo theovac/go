@@ -54,6 +54,7 @@ public class Controller {
         Node childNode;
         while(true) {
             ui.getTurn(1);
+            controller.gameState = ui.getGameState();
             rules.stoneCapture(controller.gameState);
             ui.setGameState(controller.gameState);
             Node node = new Node(controller.gameState, 2);
@@ -86,7 +87,12 @@ public class Controller {
                 if (child.winrate > bestNode.winrate) bestNode = child;
             }
             controller.gameState[bestNode.move.pos.getRow()][bestNode.move.pos.getCol()] = 2;
-            System.out.println("Computer played");
+            System.out.println("Computer played move with priority " + bestNode.move.priority);
+            System.out.print("Winrate: " + bestNode.winrate + " out of ");
+            for (Node child : node.children) {
+                System.out.print("(" + child.move.pos.getRow() + ", " +
+                        child.move.pos.getCol() +  ")" + child.winrate + " ");
+            }
             rules.stoneCapture(controller.gameState);
             ui.setGameState(controller.gameState);
         }

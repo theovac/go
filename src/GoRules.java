@@ -156,7 +156,19 @@ public class GoRules {
 
         /* The move does not cause current player's stones to be captured. */
         nextGameState[move.getRow()][move.getCol()] = colorID;
-        if (checkCapture(move, nextGameState).getLibertyCount() == 0) return false;
+        List<BoardPosition> adjacentStones = getAdjacent(move, nextGameState);
+        if (checkCapture(move, nextGameState).getLibertyCount() == 0) {
+            for (BoardPosition stone : adjacentStones) {
+                if (stone.getRow() >= 0 &&
+                        stone.getRow() < nextGameState.length &&
+                        stone.getCol() >=0 &&
+                        stone.getCol() < nextGameState.length &&
+                        (checkCapture(stone, nextGameState).getLibertyCount() == 0)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         /* The move does not fill an eye. */
         for (BoardPosition stone : getAdjacent(move, gameState)) {
@@ -167,7 +179,6 @@ public class GoRules {
                     gameState[stone.getRow()][stone.getCol()] != colorID) return true;
         }
 
-        /* TODO: The move does not lead to the same game state as after the current player's previous turn. */
         return false;
     }
 
