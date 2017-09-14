@@ -17,25 +17,7 @@ public class MonteCarlo {
            this.lastPlayColor = 2;
         } else this.lastPlayColor = 1;
     }
-/*
-    public class Node {
-        int toPlayColor;
-        Node parent;
-        Set<Node> children;
-        int[][] state;
-        int wins, losses;
 
-        private Node(int[][] state, int toPlayColor) {
-            this.toPlayColor = toPlayColor;
-            this.parent = null;
-            this.children = null;
-            this.state = state;
-            this.wins = 0;
-            this.losses = 0;
-        }
-
-    }
-*/
     public class Move {
         GoRules.BoardPosition pos;
         int priority;
@@ -47,6 +29,7 @@ public class MonteCarlo {
     }
 
     public List<Move> generate_move(Node node) {
+        System.out.println("Generating move...");
         Random randGen = new Random();
         Set<GoRules.BoardPosition> checked = new HashSet<>();
         List<Move> moves = new ArrayList<>();
@@ -78,7 +61,7 @@ public class MonteCarlo {
                }
             }
         }
-        checked = new HashSet<>();
+        checked.clear();
         // Add an extra line to the array, that represents off board positions. This is needed for pattern matching.
         int[][] paddedState = new int[node.state.length+1][node.state.length];
         Arrays.fill(paddedState[paddedState.length-1], 3);
@@ -98,14 +81,16 @@ public class MonteCarlo {
         for (int i = 1; i < paddedState.length-1; i++) {
             for (int j = 1; j < paddedState[0].length-1; j++) {
                 // The 3x3 block in string form.
-                String blockString = "" + paddedState[i-1][j-1] + paddedState[i-1][j] + paddedState[i-1][j+1] +
-                        paddedState[i][j-1] + paddedState[i][j] + paddedState[i][j+1] + paddedState[i+1][j-1] +
-                        paddedState[i+1][j] + paddedState[i+1][j+1];
-                if (matchPattern(blockString, node.toPlayColor)) {
-                    if (randGen.nextInt(100) > pPattern) {
-                        moves.add(new Move(new GoRules.BoardPosition(i, j), 2));
-                    } else {
-                        skippedMoves.add(new GoRules.BoardPosition(i, j));
+                if (paddedState[i][j] == 0) {
+                    String blockString = "" + paddedState[i - 1][j - 1] + paddedState[i - 1][j] + paddedState[i - 1][j + 1] +
+                            paddedState[i][j - 1] + paddedState[i][j] + paddedState[i][j + 1] + paddedState[i + 1][j - 1] +
+                            paddedState[i + 1][j] + paddedState[i + 1][j + 1];
+                    if (matchPattern(blockString, node.toPlayColor)) {
+                        if (randGen.nextInt(100) > pPattern) {
+                            moves.add(new Move(new GoRules.BoardPosition(i, j), 2));
+                        } else {
+                            skippedMoves.add(new GoRules.BoardPosition(i, j));
+                        }
                     }
                 }
             }
@@ -136,12 +121,17 @@ public class MonteCarlo {
         // Play one of the random moves at random.
         if (!randomMoves.isEmpty()) {
             moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
+            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
+            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
+            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
+            moves.add(new Move(randomMoves.get(randGen.nextInt(randomMoves.size() - 1)), 4));
         }
 
         return moves;
     }
 
     private boolean matchPattern(String blockString, int toPlayColor) {
+        System.out.println("Matching pattern...");
         boolean isMatch;
         boolean foundMatch = false;
         if (toPlayColor == 1) {
@@ -154,11 +144,7 @@ public class MonteCarlo {
             pattern = pattern.replaceAll("O", Integer.toString(lastPlayColor));
             pattern = pattern.replaceAll("#", Integer.toString(3));
             pattern = pattern.replaceAll("\\.", Integer.toString(0));
-            /*if (pattern.equals("?1?W02333")) {
-                System.out.println("---");
-                System.out.println(blockString);
-                System.out.println(pattern);
-            }*/
+
             for (int i = 0; i < blockString.length(); i++) {
                 if (blockString.charAt(i) != pattern.charAt(i)) {
                     if (pattern.charAt(i) == '?' && blockString.charAt(i) != '3') {
@@ -203,10 +189,12 @@ public class MonteCarlo {
 
         System.out.println("Simulating...");
         int n_moves = 0;
-        while (n_moves <= 100 && !(toPlayMove == null && lastPlayMove == null)) {
-            System.out.println(n_moves);
+        GoUI testUI = new GoUI(9);
+        testUI.setGameState(currentState);
+        while (!(toPlayMove == null && lastPlayMove == null)) {
+            //System.out.println("Moves so far: " + n_moves);
             moves = generate_move(new Node(currentState, node.toPlayColor));
-            System.out.println(moves.size());
+            //System.out.println("Available moves for player 1: " + moves.size());
             if (moves.size() > 0) {
                 toPlayMove = moves.get(0);
             } else toPlayMove = null;
@@ -214,8 +202,9 @@ public class MonteCarlo {
                 currentState[toPlayMove.pos.getRow()][toPlayMove.pos.getCol()] = node.toPlayColor;
             }
             rules.stoneCapture(currentState);
+            testUI.setGameState(currentState);
             moves = generate_move(new Node(currentState, lastPlayColor));
-            System.out.println(moves.size());
+            //System.out.println("Available moves for player 2: " + moves.size());
             if (moves.size() > 0) {
                 lastPlayMove = moves.get(0);
             } else lastPlayMove = null;
@@ -223,6 +212,7 @@ public class MonteCarlo {
                 currentState[lastPlayMove.pos.getRow()][lastPlayMove.pos.getCol()] = lastPlayColor;
             }
             rules.stoneCapture(currentState);
+            testUI.setGameState(currentState);
             n_moves++;
         }
 
@@ -247,5 +237,4 @@ public class MonteCarlo {
 
         return Arrays.asList(blackScore, whiteScore);
     }
-
 }

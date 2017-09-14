@@ -59,6 +59,24 @@ public class GoRules {
         return new GetConnectedResult(libertyCount, libertyPositions, connectedStones);
     }
 
+    public static List<BoardPosition> getAdjacent(BoardPosition pos, int[][] gameState) {
+        List<BoardPosition> adjacentStones = new ArrayList<>();
+        List<BoardPosition> adjacentPositions = new ArrayList<BoardPosition>() {
+            {
+                add(new BoardPosition(pos.getRow() + 1, pos.getCol()));
+                add(new BoardPosition(pos.getRow(), pos.getCol() + 1));
+                add(new BoardPosition(pos.getRow() - 1, pos.getCol()));
+                add(new BoardPosition(pos.getRow(), pos.getCol() - 1));
+            }
+        };
+
+        for (BoardPosition aPos : adjacentPositions) {
+            adjacentStones.add(new BoardPosition(aPos.getRow(), aPos.getCol()));
+        }
+
+        return adjacentPositions;
+    }
+
     public static final class CheckCaptureResult {
         private final int libertyCount;
         private final Set<BoardPosition> stoneGroup;
@@ -140,8 +158,17 @@ public class GoRules {
         nextGameState[move.getRow()][move.getCol()] = colorID;
         if (checkCapture(move, nextGameState).getLibertyCount() == 0) return false;
 
+        /* The move does not fill an eye. */
+        for (BoardPosition stone : getAdjacent(move, gameState)) {
+            if (stone.getRow() >= 0 &&
+                    stone.getRow() < gameState.length &&
+                    stone.getCol() >= 0 &&
+                    stone.getCol() < gameState.length &&
+                    gameState[stone.getRow()][stone.getCol()] != colorID) return true;
+        }
+
         /* TODO: The move does not lead to the same game state as after the current player's previous turn. */
-        return true;
+        return false;
     }
 
     public void stoneCapture(int[][] gameState) {
