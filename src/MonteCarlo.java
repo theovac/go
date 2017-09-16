@@ -28,7 +28,7 @@ public class MonteCarlo {
         }
     }
 
-    public List<Move> generate_move(Node node) {
+    public List<Move> generate_moves(Node node) {
         Random randGen = new Random();
         List<GoRules.BoardPosition> checked = new ArrayList<>();
         List<Move> moves = new ArrayList<>();
@@ -205,10 +205,9 @@ public class MonteCarlo {
         return foundMatch;
     }
 
-    /*
-        Simulate a game starting from a node's game state by playing the highest priority move for each player,
-        until both players pass. If at the end of the simulation the stones that have this node's color have a
-        better score, then return true.
+    /*  Simulate a game starting from a node's game state by playing the highest priority move for each player,
+    until both players pass. If at the end of the simulation the stones that have this node's color have a
+    better score, then return true.
     */
     public boolean simulatePlayout(Node node) {
         Move lastPlayMove = new Move(null, -1);
@@ -240,7 +239,7 @@ public class MonteCarlo {
             recentMoves.add(new GoRules.BoardPosition(-1, -1));
         }
         while (!(toPlayMove == null || lastPlayMove == null)) {
-            moves = generate_move(new Node(currentState, node.toPlayColor));
+            moves = generate_moves(new Node(currentState, node.toPlayColor));
             if (moves.size() > 0) {
                 toPlayMove = moves.get(0);
                 // Avoid move if move is ko.
@@ -250,7 +249,7 @@ public class MonteCarlo {
                         toPlayMove = moves.get(1);
                     } else toPlayMove = null;
                 }
-
+                // If the same move has been played recently, that move does not lead to better score so pass instead.
                 if (toPlayMove != null && rules.findBoardPosition(recentMoves, toPlayMove.pos)) {
                     toPlayMove = null;
                 }
@@ -258,7 +257,7 @@ public class MonteCarlo {
                 if (toPlayMove == null) {
                     recentMoves.addFirst(new GoRules.BoardPosition(-1, -1));
                 } else recentMoves.addFirst(toPlayMove.pos);
-            } else toPlayMove = null;
+            } else toPlayMove = null; // No available moves.
             if (toPlayMove != null) {
                 currentState[toPlayMove.pos.getRow()][toPlayMove.pos.getCol()] = node.toPlayColor;
             }
@@ -267,7 +266,7 @@ public class MonteCarlo {
                 koMove = lastPlayCaptured.get(0);
             }
 
-            moves = generate_move(new Node(currentState, lastPlayColor));
+            moves = generate_moves(new Node(currentState, lastPlayColor));
             if (moves.size() > 0) {
                 lastPlayMove = moves.get(0);
                 if (lastPlayMove.pos.getRow() == koMove.getRow() &&
@@ -317,4 +316,30 @@ public class MonteCarlo {
 
         return Arrays.asList(blackScore, whiteScore);
     }
+
+    /* Select the node where the tree will be expanded, based on a tree descend policy. */
+    private void treeDescend() {
+
+    }
+
+    /* Expand the tree by adding to a node, child nodes each one of which has one of the states that can be
+    reached through the moves returned by the move generator.
+     */
+    private void treeExpand() {
+
+    }
+
+    /* Move up the tree updating, in every node encountered, the maximum (for current player nodes) or minimum
+    (for the opponent nodes) score that can be reached in the subtree that has this node as root.
+     */
+    private void treeUpdate() {
+
+    }
+
+    /* Decide the next move. */
+    public Move getTurn() {
+
+    }
+
+
 }
