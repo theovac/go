@@ -131,7 +131,7 @@ public class MonteCarlo {
         // Play some of the random moves at random.
         if (!randomMoves.isEmpty()) {
             Collections.shuffle(randomMoves); // Shuffle so that moves at the top left of the board are not prioritized.
-            int maxMoveCount = 20;
+            int maxMoveCount = 10;
             int moveCounter = 0;
             List<GoRules.BoardPosition> checkedMoves = new ArrayList<>();
             if (randomMoves.size() < maxMoveCount) {
@@ -310,14 +310,102 @@ public class MonteCarlo {
         } else return (score.get(0) < score.get(1));
     }
 
+    /* Fill an empty area which includes a specific position, with the number 3, which differentiates this empty
+    group from the others in the board. This allows us to work on this group only.
+     */
+    private List<GoRules.BoardPosition> markEmptySpace(int[][] state, GoRules.BoardPosition pos) {
+        LinkedList<GoRules.BoardPosition> fifo = new LinkedList<>();
+        List<GoRules.BoardPosition> visited = new ArrayList<>();
+
+        fifo.add(pos);
+        state[pos.getRow()][pos.getCol()] = 3;
+
+        while (!fifo.isEmpty()) {
+            GoRules.BoardPosition currentPos = fifo.removeFirst();
+            List<GoRules.BoardPosition> adjacentStones = GoRules.getAdjacent(currentPos, state);
+            for (GoRules.BoardPosition stone : adjacentStones) {
+                if (stone.getRow() < 0 || stone.getRow() >= state.length ||
+                        stone.getCol() < 0 || stone.getCol() >= state.length) {
+                    continue;
+                }
+                if (state[stone.getRow()][stone.getCol()] == 0 && !GoRules.findBoardPosition(visited, pos)) {
+                    visited.add(stone);
+                    fifo.addFirst(stone);
+                    state[stone.getRow()][stone.getCol()] = 3;
+                }
+            }
+        }
+        return visited;
+    }
+
+    /* For a gives list of Board positions, find if any of the positions is adjacent to a stone of a given color. */
+    private boolean touches(int[][] state, List<GoRules.BoardPosition> stoneGroup, int color) {
+        for (GoRules.BoardPosition stone : stoneGroup) {
+            List<GoRules.BoardPosition> adjacentStones = GoRules.getAdjacent(stone, state);
+            for (GoRules.BoardPosition adjacentStone : adjacentStones) {
+                if (adjacentStone.getRow() < 0 || adjacentStone.getRow() >= state.length ||
+                        adjacentStone.getCol() < 0 || adjacentStone.getCol() >= state.length) {
+                    continue;
+                }
+                if (state[adjacentStone.getRow()][adjacentStone.getCol()] == color) return true;
+            }
+        }
+        return false;
+    }
+
+    // Change the color of a group of stones.
+    private void fill(int[][] state, List<GoRules.BoardPosition> stoneGroup, int color) {
+       for(GoRules.BoardPosition stone : stoneGroup) {
+           state[stone.getRow()][stone.getCol()] = color;
+       }
+    }
+
+    private int[][] getTerritoryMap(int[][] state) {
+        int[][] territoryMap = new int[state.length][state.length];
+        List<GoRules.BoardPosition> emptySpace;
+        boolean touchesBlack;
+        boolean touchesWhite;
+        boolean foundEmptySpace = true;
+        // Copy state array.
+        for (int i = 0; i < state.length; i++) {
+            for (int j = 0; j < state.length; j++) {
+                territoryMap[i][j] = state[i][j];
+            }
+        }
+
+        while(foundEmptySpace) {
+            foundEmptySpace = false;
+            for (int i = 0; i < territoryMap.length; i++) {
+                for (int j = 0; j < territoryMap.length; j++) {
+                    if (territoryMap[i][j] == 0) {
+                        foundEmptySpace = true;
+                        emptySpace = markEmptySpace(territoryMap, new GoRules.BoardPosition(i, j));
+                        touchesBlack = touches(state, emptySpace, 1);
+                        touchesWhite = touches(state, emptySpace, 2);
+                        if (touchesBlack && !touchesWhite) {
+                            fill(territoryMap, emptySpace, 1);
+                        } else if (touchesWhite && !touchesBlack) {
+                            fill(territoryMap, emptySpace, 2);
+                        }
+                    }
+                }
+            }
+        }
+        return territoryMap;
+    }
+
     private List<Integer> scoreBoard(int[][] state) {
         int blackScore = 0;
         int whiteScore = 0;
-        for (int i = 0; i < state.length; i++) {
-            for (int j = 0; j < state.length; j++) {
-                if (state[i][j] == 1) {
+        int[][] territoryMap = getTerritoryMap(state);
+        for (int i = 0; i < territoryMap.length; i++) {
+            for (int j = 0; j < territoryMap.length; j++) {
+                if (territoryMap[i][j] == 0) {
+                    System.out.println("failed");
+                }
+                if (territoryMap[i][j] == 1) {
                     blackScore++;
-                } else if (state[i][j] == 2) {
+                } else if (territoryMap[i][j] == 2) {
                     whiteScore++;
                 }
             }
