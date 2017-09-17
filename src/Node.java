@@ -7,9 +7,9 @@ public class Node {
     private Node parent;
     private List<Node> children = new ArrayList<>();
     private int[][] state;
-    private int winrate;
-    private int wins;
-    private int n_simulations;
+    private float winrate;
+    private float wins;
+    private float n_simulations;
 
     public Node(int[][] state, int toPlayColor) {
         this.move = null; // The move that led to the state of this node.
@@ -54,9 +54,9 @@ public class Node {
         this.winrate = this.wins/this.n_simulations;
     }
 
-    public int getWinrate() { return winrate; }
+    public float getWinrate() { return winrate; }
 
-    public int getWins() { return this.wins; }
+    public float getWins() { return this.wins; }
 
-    public int getSimulationCount() { return this.n_simulations; }
+    public float getSimulationCount() { return this.n_simulations; }
 }

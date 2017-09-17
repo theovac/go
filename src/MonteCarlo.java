@@ -9,10 +9,18 @@ public class MonteCarlo {
     private static int toPlayColor, lastPlayColor;
     private static int pAtari = 50;
     private static int pPattern = 50;
+    /* Move generation policy patterns. X is the player color, O is the opponent's color, . is empty position,
+    W is empty or opponent color, ? means don't care and # means out of board.
+    First 11 patterns are isGo patterns. Patterns 12(thin cut) and 13(magari) are cut patterns.
+    Patterns 14-16 are atekomi patterns, 17 is a side chase pattern, 18 is a side cut block pattern,
+    19 is a side connection block pattern and 20 is side cut pattern.
+     */
     private List<String> patterns =
             new ArrayList<String>(Arrays.asList("XOX...???", "XO....?.?", "XO?X..?.?", "?O?X.XWWW",
                                                 "X.?O.?###", "?X?W.O###", "XOO...?.?", "?XO?.?###",
-                                                "?OX?..###", "?OX?.X###", "?OXX.O###"));
+                                                "?OX?..###", "?OX?.X###", "?OXX.O###", "XO?O.????",
+                                                "???..X.XO", "????.O?O?", "?O?O.????", "?O??.O???",
+                                                "X.?O.?###", "OX?X.O###", "?X?W.O###", "?OXX.O###"));
     public MonteCarlo(int[][] rootState, int toPlayColor) {
         this.rootState = rootState;
         this.rootNode = new Node(rootState, toPlayColor);
@@ -123,7 +131,7 @@ public class MonteCarlo {
         // Play some of the random moves at random.
         if (!randomMoves.isEmpty()) {
             Collections.shuffle(randomMoves); // Shuffle so that moves at the top left of the board are not prioritized.
-            int maxMoveCount = 5;
+            int maxMoveCount = 20;
             int moveCounter = 0;
             List<GoRules.BoardPosition> checkedMoves = new ArrayList<>();
             if (randomMoves.size() < maxMoveCount) {
@@ -406,9 +414,20 @@ public class MonteCarlo {
         System.out.println("Computer played move with priority " + bestNode.getMove().priority);
         System.out.print("Winrate: " + bestNode.getWinrate() + " out of ");
         for (Node child : rootNode.getChildren()) {
-            System.out.print("(" + child.getMove().pos.getRow() + ", " +
-                    child.getMove().pos.getCol() +  ") " + child.getWins() + "/" +  child.getSimulationCount() + " ");
+            System.out.println("(" + child.getMove().pos.getRow() + ", " +
+                    child.getMove().pos.getCol() +  ") " + child.getWins() + "/" +
+                    child.getSimulationCount() + "[" + child.getWinrate() + "] ");
         }
+
+        // Calculate tree depth.
+        Node leafNode = treeDescend();
+        Node currentNode = leafNode;
+        int depth = 0;
+        while (currentNode.getParent() != null) {
+            depth++;
+            currentNode = currentNode.getParent();
+        }
+        System.out.println("Tree depth: " + depth);
         System.out.println();
         return bestNode.getMove();
     }
