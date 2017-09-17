@@ -182,7 +182,7 @@ public class GoRules {
         return false;
     }
 
-    public List<BoardPosition> stoneCapture(int[][] gameState) {
+    public static List<BoardPosition> stoneCapture(int[][] gameState) {
         List<BoardPosition> capturedStones = new ArrayList<>();
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {

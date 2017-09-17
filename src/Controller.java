@@ -38,17 +38,6 @@ public class Controller {
         rules.stoneCapture(controller.gameState);
         ui.setGameState(controller.gameState);
 
-        MonteCarlo mcts = new MonteCarlo(1);
-        /*if (!moves.isEmpty()) {
-            for (MonteCarlo.Move move : moves) {
-                if (move != null) {
-                    System.out.println("Move: " + move.pos.getRow() + ", " + move.pos.getCol() + " - " + move.priority);
-                } else System.out.println("pass");
-                controller.gameState[move.pos.getRow()][move.pos.getCol()] = 2;
-                rules.stoneCapture(controller.gameState);
-                ui.setGameState(controller.gameState);
-            }
-        }*/
         int[][] nextState = new int[controller.gameState.length][controller.gameState.length];
         Node bestNode;
         Node childNode;
@@ -57,9 +46,8 @@ public class Controller {
             controller.gameState = ui.getGameState();
             rules.stoneCapture(controller.gameState);
             ui.setGameState(controller.gameState);
-            Node node = new Node(controller.gameState, 2);
-            List<Node> children = new ArrayList<>();
-            List<MonteCarlo.Move> moves = mcts.generate_move(node);
+            /*Node node = new Node(controller.gameState, 2);
+            List<MonteCarlo.Move> moves = mcts.generate_moves(node);
             for (MonteCarlo.Move move : moves) {
                 System.out.println(move.pos.getRow() + ", " + move.pos.getCol());
                 if (move != null) {
@@ -70,29 +58,25 @@ public class Controller {
                     }
                     nextState[move.pos.getRow()][move.pos.getCol()] = 2;
                     childNode = new Node(nextState, 1);
-                    childNode.move = move;
+                    childNode.setMove(move);
                     childNode.setParent(node);
-                    children.add(childNode);
+                    node.addChild(childNode);
                 }
             }
-            node.setChildren(children);
-            bestNode = children.get(0);
-            for (Node child : node.children) {
+            bestNode = node.getChildren().get(0);
+            for (Node child : node.getChildren()) {
                 for (int i = 0; i < 3; i++) {
                     System.out.println("Iteration " + i);
                     if (mcts.simulatePlayout(child)) {
                         child.addWin();
                     } else child.addLoss();
                 }
-                if (child.winrate > bestNode.winrate) bestNode = child;
-            }
-            controller.gameState[bestNode.move.pos.getRow()][bestNode.move.pos.getCol()] = 2;
-            System.out.println("Computer played move with priority " + bestNode.move.priority);
-            System.out.print("Winrate: " + bestNode.winrate + " out of ");
-            for (Node child : node.children) {
-                System.out.print("(" + child.move.pos.getRow() + ", " +
-                        child.move.pos.getCol() +  ")" + child.winrate + " ");
-            }
+                if (child.getWinrate() > bestNode.getWinrate()) bestNode = child;
+            }*/
+
+            MonteCarlo mcts = new MonteCarlo(controller.gameState, 2);
+            MonteCarlo.Move aiTurn = mcts.getTurn();
+            controller.gameState[aiTurn.pos.getRow()][aiTurn.pos.getCol()] = 2;
             rules.stoneCapture(controller.gameState);
             ui.setGameState(controller.gameState);
         }

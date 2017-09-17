@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.function.BinaryOperator;
 
 public class MonteCarlo {
+    private int[][] rootState;
+    private Node rootNode;
     private static int toPlayColor, lastPlayColor;
     private static int pAtari = 50;
     private static int pPattern = 50;
@@ -11,7 +13,9 @@ public class MonteCarlo {
             new ArrayList<String>(Arrays.asList("XOX...???", "XO....?.?", "XO?X..?.?", "?O?X.XWWW",
                                                 "X.?O.?###", "?X?W.O###", "XOO...?.?", "?XO?.?###",
                                                 "?OX?..###", "?OX?.X###", "?OXX.O###"));
-    public MonteCarlo(int toPlayColor) {
+    public MonteCarlo(int[][] rootState, int toPlayColor) {
+        this.rootState = rootState;
+        this.rootNode = new Node(rootState, toPlayColor);
         this.toPlayColor = toPlayColor;
         if (toPlayColor == 1) {
            this.lastPlayColor = 2;
@@ -34,18 +38,18 @@ public class MonteCarlo {
         List<Move> moves = new ArrayList<>();
         List<GoRules.BoardPosition> skippedMoves = new ArrayList<>();
         // Generate moves that capture enemy stones.
-        for (int i = 0; i < node.state.length; i++) {
-            for (int j = 0; j < node.state.length; j++) {
-               if (node.state[i][j] != node.toPlayColor && node.state[i][j] != 0 &&
+        for (int i = 0; i < node.getState().length; i++) {
+            for (int j = 0; j < node.getState().length; j++) {
+               if (node.getState()[i][j] != node.getToPlayColor() && node.getState()[i][j] != 0 &&
                        !GoRules.findBoardPosition(checked, new GoRules.BoardPosition(i, j))) {
                    // Check if opponent stone group containing the stone on i, j is in atari.
                    GoRules.CheckCaptureResult captureResult =
-                           GoRules.checkCapture(new GoRules.BoardPosition(i, j), node.state);
+                           GoRules.checkCapture(new GoRules.BoardPosition(i, j), node.getState());
                    checked.addAll(captureResult.getStoneGroup());
                    if (captureResult.getLibertyCount() == 1) {
                        // Find the position where if a stone is placed, opponent stones will be captured.
                        for (GoRules.BoardPosition stone : captureResult.getStoneGroup()) {
-                           GoRules.GetConnectedResult connectedResult = GoRules.getConnected(stone, node.state);
+                           GoRules.GetConnectedResult connectedResult = GoRules.getConnected(stone, node.getState());
                            if (connectedResult.getLibertyCount() == 1) {
                                // Play move with pAtari chance
                                if (randGen.nextInt(100) > pAtari) {
@@ -61,14 +65,14 @@ public class MonteCarlo {
         }
         checked.clear();
         // Add an extra line to the array, that represents off board positions. This is needed for pattern matching.
-        int[][] paddedState = new int[node.state.length+1][node.state.length];
+        int[][] paddedState = new int[node.getState().length+1][node.getState().length];
         Arrays.fill(paddedState[paddedState.length-1], 3);
         int stateRow = 0;
         int stateCol = 0;
 
         for (int i = 0; i < paddedState.length - 1; i++) {
             for (int j = 0; j < paddedState[0].length; j++) {
-                paddedState[i][j] = node.state[stateRow][stateCol];
+                paddedState[i][j] = node.getState()[stateRow][stateCol];
                 stateCol++;
             }
             stateCol = 0;
@@ -83,7 +87,7 @@ public class MonteCarlo {
                     String blockString = "" + paddedState[i - 1][j - 1] + paddedState[i - 1][j] + paddedState[i - 1][j + 1] +
                             paddedState[i][j - 1] + paddedState[i][j] + paddedState[i][j + 1] + paddedState[i + 1][j - 1] +
                             paddedState[i + 1][j] + paddedState[i + 1][j + 1];
-                    if (matchPattern(blockString, node.toPlayColor)) {
+                    if (matchPattern(blockString, node.getToPlayColor())) {
                         if (randGen.nextInt(100) > pPattern) {
                             moves.add(new Move(new GoRules.BoardPosition(i, j), 2));
                         } else {
@@ -101,12 +105,12 @@ public class MonteCarlo {
 
         // Make a list of all the possible random moves.
         List<GoRules.BoardPosition> randomMoves = new ArrayList<>();
-        for (int i = 0; i < node.state.length; i++) {
-            for (int j = 0; j < node.state.length; j++) {
+        for (int i = 0; i < node.getState().length; i++) {
+            for (int j = 0; j < node.getState().length; j++) {
                 // Add a random move if it is a valid one.
-                if(GoRules.isValidMove(new GoRules.BoardPosition(i, j), node.toPlayColor, node.state)) {
+                if(GoRules.isValidMove(new GoRules.BoardPosition(i, j), node.getToPlayColor(), node.getState())) {
                     GoRules.GetConnectedResult randomResult =
-                            GoRules.getConnected(new GoRules.BoardPosition(i, j), node.state);
+                            GoRules.getConnected(new GoRules.BoardPosition(i, j), node.getState());
                     // If the move has only one liberty add a move in the position of the liberty instead.
                     if (randomResult.getLibertyCount() == 1) {
                         randomMoves.add(randomResult.getLibertyPositions().get(0));
@@ -129,26 +133,26 @@ public class MonteCarlo {
             } else {
                 // Play random moves prioritizing moves that are close to opponent stones.
                 for (int i = 0; i < randomMoves.size(); i++) {
-                    for (GoRules.BoardPosition layerOneStone : GoRules.getAdjacent(randomMoves.get(i), node.state)) {
+                    for (GoRules.BoardPosition layerOneStone : GoRules.getAdjacent(randomMoves.get(i), node.getState())) {
                         if (layerOneStone.getRow() >= 0 &&
-                                layerOneStone.getRow() < node.state.length &&
+                                layerOneStone.getRow() < node.getState().length &&
                                 layerOneStone.getCol() >= 0 &&
-                                layerOneStone.getCol() < node.state.length &&
-                                node.state[layerOneStone.getRow()][layerOneStone.getCol()] != node.toPlayColor &&
-                                node.state[layerOneStone.getRow()][layerOneStone.getCol()] != 0) {
+                                layerOneStone.getCol() < node.getState().length &&
+                                node.getState()[layerOneStone.getRow()][layerOneStone.getCol()] != node.getToPlayColor() &&
+                                node.getState()[layerOneStone.getRow()][layerOneStone.getCol()] != 0) {
                             if (!GoRules.findBoardPosition(checkedMoves, randomMoves.get(i))) {
                                 checkedMoves.add(randomMoves.get(i));
                                 moves.add(new Move(randomMoves.get(i), 4));
                                 moveCounter++;
                             }
                         } else {
-                            for (GoRules.BoardPosition layerTwoStone : GoRules.getAdjacent(layerOneStone, node.state)) {
+                            for (GoRules.BoardPosition layerTwoStone : GoRules.getAdjacent(layerOneStone, node.getState())) {
                                 if (layerTwoStone.getRow() >= 0 &&
-                                        layerTwoStone.getRow() < node.state.length &&
+                                        layerTwoStone.getRow() < node.getState().length &&
                                         layerTwoStone.getCol() >= 0 &&
-                                        layerTwoStone.getCol() < node.state.length &&
-                                        node.state[layerTwoStone.getRow()][layerTwoStone.getCol()] != node.toPlayColor &&
-                                        node.state[layerTwoStone.getRow()][layerTwoStone.getCol()] != 0) {
+                                        layerTwoStone.getCol() < node.getState().length &&
+                                        node.getState()[layerTwoStone.getRow()][layerTwoStone.getCol()] != node.getToPlayColor() &&
+                                        node.getState()[layerTwoStone.getRow()][layerTwoStone.getCol()] != 0) {
                                     if (!GoRules.findBoardPosition(checkedMoves, randomMoves.get(i))) {
                                         checkedMoves.add(randomMoves.get(i));
                                         moves.add(new Move(randomMoves.get(i), 4));
@@ -213,21 +217,20 @@ public class MonteCarlo {
         Move lastPlayMove = new Move(null, -1);
         Move toPlayMove = new Move(null, -1);
         int lastPlayColor;
-        if (node.toPlayColor == 1) {
+        if (node.getToPlayColor() == 1) {
             lastPlayColor = 2;
         } else lastPlayColor = 1;
         Node currentNode = node;
-        int[][] currentState = new int[node.state.length][node.state.length];
-        for (int i = 0; i < node.state.length; i++) {
-            for (int j = 0; j < node.state.length; j++) {
-                currentState[i][j] = node.state[i][j];
+        int[][] currentState = new int[node.getState().length][node.getState().length];
+        for (int i = 0; i < node.getState().length; i++) {
+            for (int j = 0; j < node.getState().length; j++) {
+                currentState[i][j] = node.getState()[i][j];
             }
         }
         List<Integer> score;
         GoRules rules = new GoRules();
         List<Move> moves;
 
-        int n_moves = 0;
         /* If a players captures only one opponent stone, then the opponent can't play in the
            position of that stone. koMove is that position.
          */
@@ -238,8 +241,8 @@ public class MonteCarlo {
         for (int i=0; i<10; i++) {
             recentMoves.add(new GoRules.BoardPosition(-1, -1));
         }
-        while (!(toPlayMove == null || lastPlayMove == null)) {
-            moves = generate_moves(new Node(currentState, node.toPlayColor));
+        while (!(toPlayMove == null && lastPlayMove == null)) {
+            moves = generate_moves(new Node(currentState, node.getToPlayColor()));
             if (moves.size() > 0) {
                 toPlayMove = moves.get(0);
                 // Avoid move if move is ko.
@@ -259,7 +262,7 @@ public class MonteCarlo {
                 } else recentMoves.addFirst(toPlayMove.pos);
             } else toPlayMove = null; // No available moves.
             if (toPlayMove != null) {
-                currentState[toPlayMove.pos.getRow()][toPlayMove.pos.getCol()] = node.toPlayColor;
+                currentState[toPlayMove.pos.getRow()][toPlayMove.pos.getCol()] = node.getToPlayColor();
             }
             lastPlayCaptured = rules.stoneCapture(currentState);
             if (lastPlayCaptured.size() == 1) {
@@ -291,14 +294,12 @@ public class MonteCarlo {
             if (toPlayCaptured.size() == 1) {
                 koMove = toPlayCaptured.get(0);
             }
-
-            n_moves++;
         }
 
         score = scoreBoard(currentState);
-        if (node.toPlayColor == 1) {
-            return (score.get(0) < score.get(1));
-        } else return (score.get(0) > score.get(1));
+        if (node.getToPlayColor() == 1) {
+            return (score.get(0) > score.get(1));
+        } else return (score.get(0) < score.get(1));
     }
 
     private List<Integer> scoreBoard(int[][] state) {
@@ -318,28 +319,97 @@ public class MonteCarlo {
     }
 
     /* Select the node where the tree will be expanded, based on a tree descend policy. */
-    private void treeDescend() {
+    private Node treeDescend() {
+        Node selectedNode = this.rootNode;
+        Node bestChild;
 
+        while(selectedNode.getChildren().size() > 0) {
+            bestChild = selectedNode.getChildren().get(0);
+            for (Node child : selectedNode.getChildren()) {
+                if (child.getWinrate() > bestChild.getWinrate()) {
+                    bestChild = child;
+                }
+            }
+            selectedNode = bestChild;
+        }
+        return selectedNode;
+    }
+
+    /* Move up the tree updating the information of every node encountered. */
+    private void treeUpdate(Node child) {
+        Node currentNode = child;
+        while (currentNode.getParent() != null) {
+            if (child.getWinrate() == 1) {
+                currentNode.getParent().addWin();
+            } else currentNode.getParent().addLoss();
+            currentNode = currentNode.getParent();
+        }
     }
 
     /* Expand the tree by adding to a node, child nodes each one of which has one of the states that can be
     reached through the moves returned by the move generator.
      */
-    private void treeExpand() {
+    private void treeExpand(Node selectedNode) {
+        List<Move> moves = generate_moves(selectedNode); // Get available moves.
+        for (Move move : moves) {
+            int[][] childState = new int[selectedNode.getState().length][selectedNode.getState().length];
+            Node child;
+            // Copy parent's state.
+            for (int i=0; i<selectedNode.getState().length; i++) {
+                for (int j=0; j<selectedNode.getState().length; j++) {
+                    childState[i][j] = selectedNode.getState()[i][j];
+                }
+            }
+            // Play a move to get the child's state.
+            if (selectedNode.getToPlayColor() == 1) {
+                childState[move.pos.getRow()][move.pos.getCol()] = 1;
+                GoRules.stoneCapture(childState);
+                child = new Node(childState, 2);
+            } else {
+                childState[move.pos.getRow()][move.pos.getCol()] = 2;
+                GoRules.stoneCapture(childState);
+                child = new Node(childState, 1);
+            }
+            // Add new child node to the selected node.
+            child.setMove(move);
+            child.setParent(selectedNode);
+            selectedNode.addChild(child);
+        }
 
-    }
+        // Run Monte Carlo simulation for every child and update the tree depending on the result.
+        for (Node child : selectedNode.getChildren()) {
+            if (simulatePlayout(child)) { // Child's color won
+                child.addWin();
+            } else child.addLoss(); // Child's color lost.
 
-    /* Move up the tree updating, in every node encountered, the maximum (for current player nodes) or minimum
-    (for the opponent nodes) score that can be reached in the subtree that has this node as root.
-     */
-    private void treeUpdate() {
-
+            // Move up the tree updating the information of every node encountered.
+            treeUpdate(child);
+        }
     }
 
     /* Decide the next move. */
     public Move getTurn() {
-
+        Node selectedNode;
+        Node bestNode;
+        long startTime = System.currentTimeMillis();
+        // Stop expanding the MC tree after certain time.
+        while ((System.currentTimeMillis()-startTime) < 5000) {
+            selectedNode = treeDescend();
+            treeExpand(selectedNode);
+        }
+        bestNode = this.rootNode.getChildren().get(0);
+        for (Node child : this.rootNode.getChildren()) {
+            if (child.getSimulationCount() > bestNode.getSimulationCount()) {
+                bestNode = child;
+            }
+        }
+        System.out.println("Computer played move with priority " + bestNode.getMove().priority);
+        System.out.print("Winrate: " + bestNode.getWinrate() + " out of ");
+        for (Node child : rootNode.getChildren()) {
+            System.out.print("(" + child.getMove().pos.getRow() + ", " +
+                    child.getMove().pos.getCol() +  ") " + child.getWins() + "/" +  child.getSimulationCount() + " ");
+        }
+        System.out.println();
+        return bestNode.getMove();
     }
-
-
 }
