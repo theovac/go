@@ -414,15 +414,27 @@ public class MonteCarlo {
         return Arrays.asList(blackScore, whiteScore);
     }
 
+    /* Calculate Upper Confidence bound 1. */
+    private double ucb(Node currentNode) {
+        double c = 0.3; // Exploration parameter.
+        return (currentNode.getWinrate() +
+                c*Math.sqrt(Math.log(currentNode.getParent().getSimulationCount())/currentNode.getSimulationCount()));
+    }
+
     /* Select the node where the tree will be expanded, based on a tree descend policy. */
     private Node treeDescend() {
         Node selectedNode = this.rootNode;
         Node bestChild;
+        double maxucb, childucb;
 
         while(selectedNode.getChildren().size() > 0) {
+            // Descend picking the node with the maximum UCB in each step.
             bestChild = selectedNode.getChildren().get(0);
+            maxucb = ucb(bestChild);
             for (Node child : selectedNode.getChildren()) {
-                if (child.getWinrate() > bestChild.getWinrate()) {
+                childucb = ucb(child);
+                if (childucb > maxucb) {
+                    maxucb = childucb;
                     bestChild = child;
                 }
             }
@@ -487,24 +499,30 @@ public class MonteCarlo {
     public Move getTurn() {
         Node selectedNode;
         Node bestNode;
+        double maxUcb, childUcb;
         long startTime = System.currentTimeMillis();
         // Stop expanding the MC tree after certain time.
-        while ((System.currentTimeMillis()-startTime) < 5000) {
+        while ((System.currentTimeMillis()-startTime) < 10000) {
             selectedNode = treeDescend();
             treeExpand(selectedNode);
         }
         bestNode = this.rootNode.getChildren().get(0);
+        maxUcb = ucb(bestNode);
         for (Node child : this.rootNode.getChildren()) {
-            if (child.getSimulationCount() > bestNode.getSimulationCount()) {
+            childUcb = ucb(child);
+            if (childUcb > maxUcb) {
+                maxUcb = childUcb;
                 bestNode = child;
             }
         }
         System.out.println("Computer played move with priority " + bestNode.getMove().priority);
-        System.out.print("Winrate: " + bestNode.getWinrate() + " out of ");
+        System.out.println("Chose move at (" + bestNode.getMove().pos.getRow() + ", " +
+                    bestNode.getMove().pos.getCol() +  ") Winrate:" + bestNode.getWins() + "/" +
+                    bestNode.getSimulationCount() + " UCB:" + ucb(bestNode) + " ");
         for (Node child : rootNode.getChildren()) {
-            System.out.println("(" + child.getMove().pos.getRow() + ", " +
-                    child.getMove().pos.getCol() +  ") " + child.getWins() + "/" +
-                    child.getSimulationCount() + "[" + child.getWinrate() + "] ");
+            System.out.println("Position: (" + child.getMove().pos.getRow() + ", " +
+                    child.getMove().pos.getCol() +  ") Winrate:" + child.getWins() + "/" +
+                    child.getSimulationCount() + " UCB:" + ucb(child) + " ");
         }
 
         // Calculate tree depth.
