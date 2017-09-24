@@ -154,7 +154,9 @@ public class GoRules {
         /* The position where the player wants to place a stone is empty. */
         if (gameState[move.getRow()][move.getCol()] != 0) return false;
 
-        /* The move does not cause current player's stones to be captured. */
+        /* The move does not cause current player's stones to be captured. Allow move if it leads to
+        opponent stone capture before player stone capture.
+        */
         nextGameState[move.getRow()][move.getCol()] = colorID;
         List<BoardPosition> adjacentStones = getAdjacent(move, nextGameState);
         if (checkCapture(move, nextGameState).getLibertyCount() == 0) {
@@ -163,6 +165,8 @@ public class GoRules {
                         stone.getRow() < nextGameState.length &&
                         stone.getCol() >=0 &&
                         stone.getCol() < nextGameState.length &&
+                        gameState[stone.getRow()][stone.getRow()] != 0 &&
+                        gameState[stone.getRow()][stone.getRow()] != colorID &&
                         (checkCapture(stone, nextGameState).getLibertyCount() == 0)) {
                     return true;
                 }

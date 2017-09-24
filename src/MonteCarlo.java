@@ -7,7 +7,7 @@ public class MonteCarlo {
     private int[][] rootState;
     private Node rootNode;
     private static int toPlayColor, lastPlayColor;
-    private static int pAtari = 50;
+    private static int pAtari = 100;
     private static int pPattern = 50;
     /* Move generation policy patterns. X is the player color, O is the opponent's color, . is empty position,
     W is empty or opponent color, ? means don't care and # means out of board.
@@ -60,7 +60,7 @@ public class MonteCarlo {
                            GoRules.GetConnectedResult connectedResult = GoRules.getConnected(stone, node.getState());
                            if (connectedResult.getLibertyCount() == 1) {
                                // Play move with pAtari chance
-                               if (randGen.nextInt(100) > pAtari) {
+                               if (randGen.nextInt(100) <= pAtari) {
                                    moves.add(new Move(connectedResult.getLibertyPositions().get(0), 1));
                                } else {
                                    skippedMoves.add(connectedResult.getLibertyPositions().get(0));
@@ -91,12 +91,13 @@ public class MonteCarlo {
         for (int i = 1; i < paddedState.length-1; i++) {
             for (int j = 1; j < paddedState[0].length-1; j++) {
                 // The 3x3 block in string form.
-                if (paddedState[i][j] == 0) {
+                if (paddedState[i][j] == 0 &&
+                        GoRules.isValidMove(new GoRules.BoardPosition(i, j), node.getToPlayColor(), node.getState())) {
                     String blockString = "" + paddedState[i - 1][j - 1] + paddedState[i - 1][j] + paddedState[i - 1][j + 1] +
                             paddedState[i][j - 1] + paddedState[i][j] + paddedState[i][j + 1] + paddedState[i + 1][j - 1] +
                             paddedState[i + 1][j] + paddedState[i + 1][j + 1];
                     if (matchPattern(blockString, node.getToPlayColor())) {
-                        if (randGen.nextInt(100) > pPattern) {
+                        if (randGen.nextInt(100) <= pPattern) {
                             moves.add(new Move(new GoRules.BoardPosition(i, j), 2));
                         } else {
                             skippedMoves.add(new GoRules.BoardPosition(i, j));
@@ -501,10 +502,15 @@ public class MonteCarlo {
         double maxUcb, childUcb;
         long startTime = System.currentTimeMillis();
         // Stop expanding the MC tree after certain time.
-        while ((System.currentTimeMillis()-startTime) < 10000) {
+        while ((System.currentTimeMillis()-startTime) < 1000) {
             selectedNode = treeDescend();
             treeExpand(selectedNode);
         }
+        if (this.rootNode.getChildren().isEmpty()) return null; // No moves available.
+        for (Node child : this.rootNode.getChildren()) {
+            if (child.getMove().priority == 1) return child.getMove(); // Always play atari moves.
+        }
+
         bestNode = this.rootNode.getChildren().get(0);
         maxUcb = ucb(bestNode);
         for (Node child : this.rootNode.getChildren()) {

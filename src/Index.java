@@ -2,7 +2,7 @@
  * Created by theo on 5/8/2016.
  */
 public class Index {
-    int x, y;
+    private int x, y;
     public Index(int x, int y) {
         this.x = x;
         this.y = y;
@@ -12,7 +12,7 @@ public class Index {
         return x;
     }
 
-    public int gety() {
+    public int getY() {
         return y;
     }
 
@@ -20,7 +20,7 @@ public class Index {
         this.x = x;
     }
 
-    public void sety(int y) {
+    public void setY(int y) {
         this.y = y;
     }
 }

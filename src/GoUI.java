@@ -188,8 +188,8 @@ public class GoUI {
                 for(int i = 0; i < boardSize; i++) {
                     for (int j = 0; j < boardSize; j++) {
                         if (buttonArray[i][j] == moveButton) {
-                            moveIndex.x = i;
-                            moveIndex.y = j;
+                            moveIndex.setX(i);
+                            moveIndex.setY(j);
                             //System.out.println("Got moveIndex");
                         }
                     }
@@ -202,8 +202,8 @@ public class GoUI {
 
     public boolean checkSelfCapture(Index index) {
         boolean result = false;
-        int i  = index.x;
-        int j = index.y;
+        int i  = index.getX();
+        int j = index.getY();
         if (i > 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
                 && gameState[i][j] == 1 && gameState[i - 1][j] == 2
                 && gameState[i + 1][j] == 2 && gameState[i][j - 1] == 2
@@ -292,8 +292,6 @@ public class GoUI {
         }
 
         public void mouseClicked(MouseEvent e) {
-            this.setIcon(currentPlayerIcon);
-            updateGameState();
             hoverStatus = false;
             moveButton = (JButton)e.getSource();
             waitingForTurn = false;

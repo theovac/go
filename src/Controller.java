@@ -21,13 +21,24 @@ public class Controller {
         controller.gameState = ui.getGameState();
         ui.setGameState(controller.gameState);
         rules.stoneCapture(controller.gameState);
+
+        controller.gameState[5][5] = 1;
+        controller.gameState[6][5] = 2;
+        controller.gameState[4][5] = 2;
+        controller.gameState[5][6] = 2;
         ui.setGameState(controller.gameState);
 
         while(true) {
             playerTurn = ui.getTurn(1);
-            controller.gameState = ui.getGameState();
-            rules.stoneCapture(controller.gameState);
-            ui.setGameState(controller.gameState);
+            if (playerTurn != null) {
+                if (GoRules.isValidMove(new GoRules.BoardPosition(playerTurn.getX(),
+                        playerTurn.getY()), 1, controller.gameState)) {
+                    controller.gameState[playerTurn.getX()][playerTurn.getY()] = 1;
+                    rules.stoneCapture(controller.gameState);
+                    ui.setGameState(controller.gameState);
+                    System.out.println("Move is valid...");
+                } else continue;
+            }
 
             MonteCarlo mcts = new MonteCarlo(controller.gameState, 2);
             MonteCarlo.Move aiTurn = mcts.getTurn();
