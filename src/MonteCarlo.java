@@ -394,14 +394,13 @@ public class MonteCarlo {
         return territoryMap;
     }
 
-    private List<Integer> scoreBoard(int[][] state) {
+    public List<Integer> scoreBoard(int[][] state) {
         int blackScore = 0;
         int whiteScore = 0;
         int[][] territoryMap = getTerritoryMap(state);
         for (int i = 0; i < territoryMap.length; i++) {
             for (int j = 0; j < territoryMap.length; j++) {
                 if (territoryMap[i][j] == 0) {
-                    System.out.println("failed");
                 }
                 if (territoryMap[i][j] == 1) {
                     blackScore++;

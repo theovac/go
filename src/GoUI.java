@@ -22,6 +22,7 @@ public class GoUI {
     private static volatile boolean waitingForTurn = true;
     private static JButton moveButton;
     private static Index moveIndex = new Index(-1, -1);
+    private boolean playerPassed = false;
 
     public GoUI(int boardSize){
         this.boardSize = boardSize;
@@ -87,10 +88,18 @@ public class GoUI {
                 System.exit(0);
             }
         });
+        JMenuItem passButton = new JMenuItem("Pass");
+        passButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                playerPassed = true;
+            }
+        });
 
         game.add(restart);
         game.add(quit);
         menuBar.add(game);
+        menuBar.add(passButton);
 
         return menuBar;
 
@@ -170,6 +179,11 @@ public class GoUI {
         waitingForTurn = true;
         currentPlayerIcon = (id == 1) ? blackIcon : whiteIcon;
         while(true) {
+            if (playerPassed) {
+                playerPassed = false;
+                System.out.println("Player passed...");
+                return null;
+            }
             if (!waitingForTurn) {
                 for(int i = 0; i < boardSize; i++) {
                     for (int j = 0; j < boardSize; j++) {
