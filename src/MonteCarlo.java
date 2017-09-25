@@ -6,6 +6,7 @@ import java.util.function.BinaryOperator;
 public class MonteCarlo {
     private int[][] rootState;
     private Node rootNode;
+    private List<Node> tree = new ArrayList<>();
     private static int toPlayColor, lastPlayColor;
     private static int pAtari = 100;
     private static int pPattern = 50;
@@ -24,6 +25,7 @@ public class MonteCarlo {
     public MonteCarlo(int[][] rootState, int toPlayColor) {
         this.rootState = rootState;
         this.rootNode = new Node(rootState, toPlayColor);
+        this.tree.add(this.rootNode);
         this.toPlayColor = toPlayColor;
         if (toPlayColor == 1) {
            this.lastPlayColor = 2;
@@ -306,9 +308,9 @@ public class MonteCarlo {
         }
 
         score = scoreBoard(currentState);
-        if (node.getToPlayColor() == 1) {
-            return (score.get(0) > score.get(1));
-        } else return (score.get(0) < score.get(1));
+        if (this.toPlayColor == 1) {
+            return (score.get(0) < score.get(1));
+        } else return (score.get(0) >= score.get(1));
     }
 
     /* Fill an empty area which includes a specific position, with the number 3, which differentiates this empty
@@ -482,6 +484,7 @@ public class MonteCarlo {
             child.setMove(move);
             child.setParent(selectedNode);
             selectedNode.addChild(child);
+            tree.add(child);
         }
 
         // Run Monte Carlo simulation for every child and update the tree depending on the result.
@@ -502,7 +505,7 @@ public class MonteCarlo {
         double maxUcb, childUcb;
         long startTime = System.currentTimeMillis();
         // Stop expanding the MC tree after certain time.
-        while ((System.currentTimeMillis()-startTime) < 1000) {
+        while ((System.currentTimeMillis()-startTime) < 10000) {
             selectedNode = treeDescend();
             treeExpand(selectedNode);
         }
@@ -512,11 +515,10 @@ public class MonteCarlo {
         }
 
         bestNode = this.rootNode.getChildren().get(0);
-        maxUcb = ucb(bestNode);
         for (Node child : this.rootNode.getChildren()) {
-            childUcb = ucb(child);
-            if (childUcb > maxUcb) {
-                maxUcb = childUcb;
+            if (child.getSimulationCount() > bestNode.getSimulationCount()) {
+                bestNode = child;
+            } else if (child.getWinrate() > bestNode.getWinrate()) {
                 bestNode = child;
             }
         }
@@ -530,16 +532,25 @@ public class MonteCarlo {
                     child.getSimulationCount() + " UCB:" + ucb(child) + " ");
         }
 
-        // Calculate tree depth.
-        Node leafNode = treeDescend();
-        Node currentNode = leafNode;
+        int maxDepth = 0;
+        for (Node treeNode : tree) {
+            if (getDepth(treeNode) > maxDepth) {
+                maxDepth = getDepth(treeNode);
+            }
+        }
+
+
+        System.out.println("Tree depth: " + maxDepth);
+        System.out.println();
+        return bestNode.getMove();
+    }
+    private int getDepth(Node node) {
         int depth = 0;
+        Node currentNode = node;
         while (currentNode.getParent() != null) {
             depth++;
             currentNode = currentNode.getParent();
         }
-        System.out.println("Tree depth: " + depth);
-        System.out.println();
-        return bestNode.getMove();
+        return depth;
     }
 }

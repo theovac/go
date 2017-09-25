@@ -21,11 +21,6 @@ public class Controller {
         controller.gameState = ui.getGameState();
         ui.setGameState(controller.gameState);
         rules.stoneCapture(controller.gameState);
-
-        controller.gameState[5][5] = 1;
-        controller.gameState[6][5] = 2;
-        controller.gameState[4][5] = 2;
-        controller.gameState[5][6] = 2;
         ui.setGameState(controller.gameState);
 
         while(true) {
