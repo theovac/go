@@ -1,6 +1,8 @@
 import sun.reflect.generics.tree.Tree;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.BinaryOperator;
 
 public class MonteCarlo {
@@ -499,24 +501,43 @@ public class MonteCarlo {
         }
     }
 
+    private int getDepth(Node node) {
+        int depth = 0;
+        Node currentNode = node;
+        while (currentNode.getParent() != null) {
+            depth++;
+            currentNode = currentNode.getParent();
+        }
+        return depth;
+    }
+
     /* Decide the next move. */
-    public Move getTurn() {
+    public Move getTurn(boolean possibleKo, GoRules.BoardPosition blackTurn) {
         Node selectedNode;
         Node bestNode;
-        double maxUcb, childUcb;
         long startTime = System.currentTimeMillis();
+        GoRules.BoardPosition komove = new GoRules.BoardPosition(-1, -1);
+        if (possibleKo  && blackTurn != null && GoRules.checkCapture(blackTurn, rootState).getLibertyCount() == 1) {
+            komove = GoRules.getConnected(blackTurn, rootState).getLibertyPositions().get(0);
+        }
         // Stop expanding the MC tree after certain time.
-        while ((System.currentTimeMillis()-startTime) < 100) {
+        while ((System.currentTimeMillis()-startTime) < 10000) {
             selectedNode = treeDescend();
             treeExpand(selectedNode);
         }
         if (this.rootNode.getChildren().isEmpty()) return null; // No moves available.
         for (Node child : this.rootNode.getChildren()) {
+            if (child.getMove().pos.getRow() == komove.getRow() && child.getMove().pos.getCol() == komove.getCol()) {
+                continue;
+            }
             if (child.getMove().priority == 1) return child.getMove(); // Always play atari moves.
         }
 
-        bestNode = this.rootNode.getChildren().get(0);
+        bestNode = new Node(this.rootState, -1);
         for (Node child : this.rootNode.getChildren()) {
+            if (child.getMove().pos.getRow() == komove.getRow() && child.getMove().pos.getCol() == komove.getCol()) {
+                continue;
+            }
             if (child.getSimulationCount() > bestNode.getSimulationCount()) {
                 bestNode = child;
             } else if (child.getWinrate() > bestNode.getWinrate()) {
@@ -545,13 +566,5 @@ public class MonteCarlo {
         System.out.println();
         return bestNode.getMove();
     }
-    private int getDepth(Node node) {
-        int depth = 0;
-        Node currentNode = node;
-        while (currentNode.getParent() != null) {
-            depth++;
-            currentNode = currentNode.getParent();
-        }
-        return depth;
-    }
+
 }

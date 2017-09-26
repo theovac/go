@@ -165,8 +165,8 @@ public class GoRules {
                         stone.getRow() < nextGameState.length &&
                         stone.getCol() >=0 &&
                         stone.getCol() < nextGameState.length &&
-                        gameState[stone.getRow()][stone.getRow()] != 0 &&
-                        gameState[stone.getRow()][stone.getRow()] != colorID &&
+                        nextGameState[stone.getRow()][stone.getCol()] != 0 &&
+                        nextGameState[stone.getRow()][stone.getCol()] != colorID &&
                         (checkCapture(stone, nextGameState).getLibertyCount() == 0)) {
                     return true;
                 }
@@ -203,6 +203,43 @@ public class GoRules {
         }
         return capturedStones;
     }
+
+    public static List<BoardPosition> captureBlack (int[][] gameState) {
+        List<BoardPosition> capturedStones = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (gameState[i][j] == 1) {
+                    CheckCaptureResult result = checkCapture(new BoardPosition(i, j), gameState);
+                    if (result.getLibertyCount() == 0) {
+                        capturedStones = result.getStoneGroup();
+                        for (BoardPosition captured : result.getStoneGroup()) {
+                            gameState[captured.getRow()][captured.getCol()] = 0;
+                        }
+                    }
+                }
+            }
+        }
+        return capturedStones;
+    }
+
+    public static List<BoardPosition> captureWhite (int[][] gameState) {
+        List<BoardPosition> capturedStones = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (gameState[i][j] == 2) {
+                    CheckCaptureResult result = checkCapture(new BoardPosition(i, j), gameState);
+                    if (result.getLibertyCount() == 0) {
+                        capturedStones = result.getStoneGroup();
+                        for (BoardPosition captured : result.getStoneGroup()) {
+                            gameState[captured.getRow()][captured.getCol()] = 0;
+                        }
+                    }
+                }
+            }
+        }
+        return capturedStones;
+    }
+
 
     /* Calculate the territory points of a player. */
     public int getTerritory(int[][] gameState, int colorID) {
