@@ -37,6 +37,7 @@ public class Controller {
 
             MonteCarlo mcts = new MonteCarlo(controller.gameState, 2);
             MonteCarlo.Move aiTurn = mcts.getTurn();
+            System.out.println("AI played");
             if (aiTurn == null && playerTurn == null) {
                 score  = mcts.scoreBoard(controller.gameState);
                 if (score.get(0) >= score.get(1)+7) { // Give white an advantage of 7 points because it plays second.
@@ -51,6 +52,8 @@ public class Controller {
             controller.gameState[aiTurn.pos.getRow()][aiTurn.pos.getCol()] = 2;
             rules.stoneCapture(controller.gameState);
             ui.setGameState(controller.gameState);
+            score = mcts.scoreBoard(controller.gameState);
+            System.out.println("Territory: Black(" + score.get(0) + ") - White(" + score.get(1) + ")");
         }
     }
 }

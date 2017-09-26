@@ -4,8 +4,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.Buffer;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
@@ -15,7 +15,7 @@ public class GoUI {
     private static ImageIcon blackIcon, whiteIcon;
 
     private static int boardSize;
-    private static int[][] gameState;
+    public static int[][] gameState;
     private static Intersection[][] buttonArray;
     private static int currentPlayerId;
     private static ImageIcon currentPlayerIcon;
@@ -100,7 +100,6 @@ public class GoUI {
         game.add(quit);
         menuBar.add(game);
         menuBar.add(passButton);
-
         return menuBar;
 
     }

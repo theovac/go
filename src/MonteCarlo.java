@@ -321,6 +321,7 @@ public class MonteCarlo {
         List<GoRules.BoardPosition> visited = new ArrayList<>();
 
         fifo.add(pos);
+        visited.add(pos);
         state[pos.getRow()][pos.getCol()] = 3;
 
         while (!fifo.isEmpty()) {
@@ -403,7 +404,7 @@ public class MonteCarlo {
         int[][] territoryMap = getTerritoryMap(state);
         for (int i = 0; i < territoryMap.length; i++) {
             for (int j = 0; j < territoryMap.length; j++) {
-                if (territoryMap[i][j] == 0) {
+                if (territoryMap[i][j] == 3) {
                 }
                 if (territoryMap[i][j] == 1) {
                     blackScore++;
@@ -505,7 +506,7 @@ public class MonteCarlo {
         double maxUcb, childUcb;
         long startTime = System.currentTimeMillis();
         // Stop expanding the MC tree after certain time.
-        while ((System.currentTimeMillis()-startTime) < 10000) {
+        while ((System.currentTimeMillis()-startTime) < 100) {
             selectedNode = treeDescend();
             treeExpand(selectedNode);
         }
