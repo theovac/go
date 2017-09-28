@@ -23,13 +23,6 @@ public class Controller {
         ui.setGameState(controller.gameState);
         rules.stoneCapture(controller.gameState);
 
-        controller.gameState[4][5] = 2;
-        controller.gameState[4][4] = 1;
-        controller.gameState[4][6] = 1;
-        controller.gameState[3][5] = 1;
-        controller.gameState[5][4] = 2;
-        controller.gameState[5][6] = 2;
-        controller.gameState[6][5] = 2;
         ui.setGameState(controller.gameState);
         List<GoRules.BoardPosition> capturedWhite = new ArrayList<>();
         List<GoRules.BoardPosition> capturedBlack = new ArrayList<>();

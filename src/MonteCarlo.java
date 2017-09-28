@@ -310,7 +310,7 @@ public class MonteCarlo {
         }
 
         score = scoreBoard(currentState);
-        if (this.toPlayColor == 1) {
+        if (node.getToPlayColor() == 1) {
             return (score.get(0) < score.get(1));
         } else return (score.get(0) >= score.get(1));
     }
@@ -421,7 +421,7 @@ public class MonteCarlo {
 
     /* Calculate Upper Confidence bound 1. */
     private double ucb(Node currentNode) {
-        double c = 0.3; // Exploration parameter.
+        double c = Math.sqrt(2); // Exploration parameter.
         return (currentNode.getWinrate() +
                 c*Math.sqrt(Math.log(currentNode.getParent().getSimulationCount())/currentNode.getSimulationCount()));
     }
@@ -452,7 +452,7 @@ public class MonteCarlo {
     private void treeUpdate(Node child) {
         Node currentNode = child;
         while (currentNode.getParent() != null) {
-            if (child.getWinrate() == 1) {
+            if (child.getWinrate() == 1 && currentNode.getParent().getToPlayColor() == child.getToPlayColor()) {
                 currentNode.getParent().addWin();
             } else currentNode.getParent().addLoss();
             currentNode = currentNode.getParent();
@@ -521,7 +521,7 @@ public class MonteCarlo {
             komove = GoRules.getConnected(blackTurn, rootState).getLibertyPositions().get(0);
         }
         // Stop expanding the MC tree after certain time.
-        while ((System.currentTimeMillis()-startTime) < 10000) {
+        while ((System.currentTimeMillis()-startTime) < 20000) {
             selectedNode = treeDescend();
             treeExpand(selectedNode);
         }
