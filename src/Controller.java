@@ -17,7 +17,7 @@ public class Controller {
         GoUI ui = new GoUI(9);
         GoRules rules = new GoRules();
         GoAI ai = new GoAI(controller, 2, 2);
-        Index playerTurn;
+        GoRules.BoardPosition playerTurn;
         List<Integer> score;
         controller.gameState = ui.getGameState();
         ui.setGameState(controller.gameState);
@@ -37,14 +37,14 @@ public class Controller {
                 komove = GoRules.getConnected(aiTurn.pos, controller.gameState).getLibertyPositions().get(0);
             }
             if (playerTurn != null) {
-                if (!(playerTurn.getX() == komove.getRow() && playerTurn.getY() == komove.getCol()) &&
-                        GoRules.isValidMove(new GoRules.BoardPosition(playerTurn.getX(),
-                        playerTurn.getY()), 1, controller.gameState)) {
-                    controller.gameState[playerTurn.getX()][playerTurn.getY()] = 1;
+                if (!(playerTurn.getRow() == komove.getRow() && playerTurn.getCol() == komove.getCol()) &&
+                        GoRules.isValidMove(new GoRules.BoardPosition(playerTurn.getRow(),
+                        playerTurn.getCol()), 1, controller.gameState)) {
+                    controller.gameState[playerTurn.getRow()][playerTurn.getCol()] = 1;
                     capturedWhite = rules.captureWhite(controller.gameState);
                     ui.setGameState(controller.gameState);
                 } else {
-                    controller.gameState[playerTurn.getX()][playerTurn.getY()] = 0;
+                    controller.gameState[playerTurn.getRow()][playerTurn.getCol()] = 0;
                     ui.setGameState(controller.gameState);
                     continue;
                 }
@@ -53,7 +53,7 @@ public class Controller {
             MonteCarlo mcts = new MonteCarlo(controller.gameState, 2);
             GoRules.BoardPosition lastBlackMove = null;
             if (playerTurn != null) {
-                lastBlackMove = new GoRules.BoardPosition(playerTurn.getX(), playerTurn.getY());
+                lastBlackMove = new GoRules.BoardPosition(playerTurn.getRow(), playerTurn.getCol());
             }
             aiTurn = mcts.getTurn(capturedWhite.size() == 1, lastBlackMove);
             if (aiTurn == null && playerTurn == null) {

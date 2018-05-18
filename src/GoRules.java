@@ -107,9 +107,13 @@ public class GoRules {
             return this.row;
         }
 
+        public void setRow(int row) { this.row = row;};
+
         public int getCol() {
             return this.col;
         }
+
+        public void setCol(int col) { this.col= col;};
     }
 
     public static boolean findBoardPosition(List<BoardPosition> positionList, BoardPosition position) {

@@ -21,7 +21,7 @@ public class GoUI {
     private static ImageIcon currentPlayerIcon;
     private static volatile boolean waitingForTurn = true;
     private static JButton moveButton;
-    private static Index moveIndex = new Index(-1, -1);
+    private static GoRules.BoardPosition movePos = new GoRules.BoardPosition(-1, -1);
     private boolean playerPassed = false;
 
     public GoUI(int boardSize){
@@ -38,7 +38,11 @@ public class GoUI {
     }
 
     private final void initUI() throws IOException{
-        loadImages();
+        blackImg = ImageIO.read(new File("black.png"));
+        whiteImg = ImageIO.read(new File("white.png"));
+        blackIcon = new ImageIcon(blackImg.getScaledInstance(60, 60, blackImg.SCALE_DEFAULT));
+        whiteIcon = new ImageIcon(whiteImg.getScaledInstance(60, 60, whiteImg.SCALE_DEFAULT));
+
         JFrame mainFrame = new JFrame("GO");
         mainFrame.getContentPane().setLayout(new BorderLayout());
         mainFrame.setContentPane(new JPanel() { BufferedImage image =
@@ -59,13 +63,6 @@ public class GoUI {
         mainFrame.pack();
         mainFrame.setResizable(false);
         mainFrame.setVisible(true);
-    }
-
-    private void loadImages() throws IOException {
-        blackImg = ImageIO.read(new File("black.png"));
-        whiteImg = ImageIO.read(new File("white.png"));
-        blackIcon = new ImageIcon(blackImg.getScaledInstance(60, 60, blackImg.SCALE_DEFAULT));
-        whiteIcon = new ImageIcon(whiteImg.getScaledInstance(60, 60, whiteImg.SCALE_DEFAULT));
     }
 
     private JMenuBar createMenuBar() {
@@ -174,7 +171,7 @@ public class GoUI {
         drawState();
     }
 
-    public Index getTurn(int id) {
+    public GoRules.BoardPosition getTurn(int id) {
         waitingForTurn = true;
         currentPlayerIcon = (id == 1) ? blackIcon : whiteIcon;
         while(true) {
@@ -187,96 +184,16 @@ public class GoUI {
                 for(int i = 0; i < boardSize; i++) {
                     for (int j = 0; j < boardSize; j++) {
                         if (buttonArray[i][j] == moveButton) {
-                            moveIndex.setX(i);
-                            moveIndex.setY(j);
-                            //System.out.println("Got moveIndex");
+                            movePos.setRow(i);
+                            movePos.setCol(j);
                         }
                     }
                 }
 
-               return moveIndex;
+               return movePos;
             }
         }
     }
-
-    public boolean checkSelfCapture(Index index) {
-        boolean result = false;
-        int i  = index.getX();
-        int j = index.getY();
-        if (i > 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] == 1 && gameState[i - 1][j] == 2
-                && gameState[i + 1][j] == 2 && gameState[i][j - 1] == 2
-                && gameState[i][j + 1] == 2) {
-            result = true;
-        } else if (i > 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] == 2 && gameState[i - 1][j] == 1
-                && gameState[i + 1][j] == 1 && gameState[i][j - 1] == 1
-                && gameState[i][j + 1] == 1) {
-            result = true;
-        } else if (i == 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] == 1
-                && gameState[i + 1][j] == 2 && gameState[i][j - 1] == 2
-                && gameState[i][j + 1] == 2) {
-            result = true;
-        } else if (i == 0 && j > 0 && i < boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] == 2
-                && gameState[i + 1][j] == 1 && gameState[i][j - 1] == 1
-                && gameState[i][j + 1] == 1) {
-            result = true;
-        } else if (i > 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] == 1 && gameState[i - 1][j] == 2
-                && gameState[i + 1][j] == 2
-                && gameState[i][j + 1] == 2) {
-            result = true;
-        } else if (i > 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] == 2 && gameState[i - 1][j] == 1
-                && gameState[i + 1][j] == 1
-                && gameState[i][j + 1] == 1) {
-            result = true;
-        } else if (i > 0 && j > 0 && i == boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] == 1 && gameState[i - 1][j] == 2
-                && gameState[i][j - 1] == 2
-                && gameState[i][j + 1] == 2) {
-            result = true;
-        } else if (i > 0 && j > 0 && i == boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] == 2 && gameState[i - 1][j] == 1
-                && gameState[i][j - 1] == 1
-                && gameState[i][j + 1] == 1) {
-            result = true;
-        } else if (i > 0 && j > 0 && i < boardSize - 1 && j == boardSize - 1
-                && gameState[i][j] == 1 && gameState[i - 1][j] == 2
-                && gameState[i + 1][j] == 2 && gameState[i][j - 1] == 2) {
-            result = true;
-        } else if (i > 0 && j > 0 && i < boardSize - 1 && j == boardSize - 1
-                && gameState[i][j] == 2 && gameState[i - 1][j] == 1
-                && gameState[i + 1][j] == 1 && gameState[i][j - 1] == 1) {
-            result = true;
-        }
-        else if (i > 0 && j == 0 && i == boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] ==  1 && gameState[i-1][j] == 2
-                && gameState[i][j + 1] == 2) {
-            result = true;
-        }
-        else if (i > 0 && j == 0 && i == boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] ==  2 && gameState[i-1][j] == 1
-                && gameState[i][j + 1] == 1) {
-            result = true;
-        }
-        else if (i == 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] ==  1
-                && gameState[i + 1][j] == 2
-                && gameState[i][j + 1] == 2) {
-            result = true;
-        }
-        else if (i == 0 && j == 0 && i < boardSize - 1 && j < boardSize - 1
-                && gameState[i][j] ==  2
-                && gameState[i + 1][j] == 1
-                && gameState[i][j + 1] == 1) {
-            result = true;
-        }
-        return result;
-    }
-
 
     public class Intersection extends JButton implements MouseListener {
 
