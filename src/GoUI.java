@@ -10,81 +10,94 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class GoUI {
+    private BufferedImage blackStoneImg, whiteStoneImg;
+    private ImageIcon blackStoneIcon, whiteStoneIcon;
+    private JFrame mainFrame;
 
-    BufferedImage blackImg, whiteImg;
-    private static ImageIcon blackIcon, whiteIcon;
 
-    private static int boardSize;
-    public static int[][] gameState;
-    private static Intersection[][] buttonArray;
-    private static int currentPlayerId;
-    private static ImageIcon currentPlayerIcon;
-    private static volatile boolean waitingForTurn = true;
-    private static JButton moveButton;
-    private static GoRules.BoardPosition movePos = new GoRules.BoardPosition(-1, -1);
+    private int boardSize;
+    public int[][] gameState;
+    private MoveButtonBoard moveButtonBoard;
+    private GoRules.BoardPosition movePos = new GoRules.BoardPosition(-1, -1);
     private boolean playerPassed = false;
+    private JPanel moveButtonPanel;
 
-    public GoUI(int boardSize){
+    public GoUI(int boardSize) {
         this.boardSize = boardSize;
         this.gameState = new int[this.boardSize][this.boardSize];
-        this.buttonArray = new Intersection[this.boardSize][this.boardSize];
+        this.moveButtonBoard = new MoveButtonBoard(boardSize);
 
         try {
-            initUI();
+            this.blackStoneImg = ImageIO.read(new File("black.png"));
+            this.whiteStoneImg = ImageIO.read(new File("white.png"));
+            this.blackStoneIcon = new ImageIcon(blackStoneImg.getScaledInstance(60, 60, blackStoneImg.SCALE_DEFAULT));
+            this.whiteStoneIcon = new ImageIcon(whiteStoneImg.getScaledInstance(60, 60, whiteStoneImg.SCALE_DEFAULT));
+
+            this.mainFrame = new JFrame("GO");
+            this.mainFrame.getContentPane().setLayout(new BorderLayout());
+            this.mainFrame.setContentPane(new JPanel() {
+                BufferedImage boardImg =
+                        ImageIO.read(new File("Blank_Go_board_9x9.png"));
+
+                public void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    g.drawImage(boardImg.getScaledInstance(600, 600, Image.SCALE_DEFAULT), 0, 0, null);
+                }
+
+            });
+            this.moveButtonPanel = new JPanel();
+            this.moveButtonPanel.setLayout(new GridLayout(9, 9, 5, 5));
+            this.moveButtonPanel.setBorder(BorderFactory.createEmptyBorder());
+            this.moveButtonPanel.setOpaque(false);
+
+            this.mainFrame.add(moveButtonPanel, BorderLayout.SOUTH);
+            JMenuBar menuBar = createMenuBar();
+            this.mainFrame.setSize(615, 640);
+            this.mainFrame.setJMenuBar(menuBar);
+            this.mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            this.mainFrame.pack();
+            this.mainFrame.setResizable(false);
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Board image not found");
         }
     }
 
-    private final void initUI() throws IOException{
-        blackImg = ImageIO.read(new File("black.png"));
-        whiteImg = ImageIO.read(new File("white.png"));
-        blackIcon = new ImageIcon(blackImg.getScaledInstance(60, 60, blackImg.SCALE_DEFAULT));
-        whiteIcon = new ImageIcon(whiteImg.getScaledInstance(60, 60, whiteImg.SCALE_DEFAULT));
-
-        JFrame mainFrame = new JFrame("GO");
-        mainFrame.getContentPane().setLayout(new BorderLayout());
-        mainFrame.setContentPane(new JPanel() { BufferedImage image =
-                ImageIO.read(new URL("http://go.alamino.net/aprendajogargo/images/Blank_Go_board_9x9.png"));
-        public void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            g.drawImage(image.getScaledInstance(
-                    600, 600, image.SCALE_DEFAULT), 0, 0, 600, 600, this);
+    public void initUI(){
+        // Initialise all clickable move selection buttons.
+        this.moveButtonBoard.init();
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                moveButtonPanel.add(this.moveButtonBoard.get(i, j));
             }
-
-        });
-
-        interBhv(mainFrame);
-        JMenuBar menuBar = createMenuBar();
-        mainFrame.setJMenuBar(menuBar);
-        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        mainFrame.setSize(615, 640);
-        mainFrame.pack();
-        mainFrame.setResizable(false);
-        mainFrame.setVisible(true);
+        }
+        this.mainFrame.setVisible(true);
     }
 
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-        JMenu game = new JMenu("Game");
-        JMenuItem restart = new JMenuItem("Restart");
-        restart.setMnemonic(KeyEvent.VK_R);
-        restart.addActionListener(new ActionListener() {
+        JMenu gameTab = new JMenu("Game");
+        menuBar.add(gameTab);
+
+        JMenuItem restartButton = new JMenuItem("Restart");
+        restartButton.setMnemonic(KeyEvent.VK_R);
+        restartButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 resetGameState();
             }
         });
+        gameTab.add(restartButton);
 
-        JMenuItem quit = new JMenuItem("Quit");
-        quit.setMnemonic(KeyEvent.VK_Q);
-        quit.addActionListener(new ActionListener() {
+        JMenuItem quitButton = new JMenuItem("Quit");
+        quitButton.setMnemonic(KeyEvent.VK_Q);
+        quitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.exit(0);
             }
         });
+        gameTab.add(quitButton);
+
         JMenuItem passButton = new JMenuItem("Pass");
         passButton.addActionListener(new ActionListener() {
             @Override
@@ -92,63 +105,38 @@ public class GoUI {
                 playerPassed = true;
             }
         });
-
-        game.add(restart);
-        game.add(quit);
-        menuBar.add(game);
         menuBar.add(passButton);
+
         return menuBar;
 
-    }
-
-    private void interBhv(JFrame mainFrame) throws IOException {
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(9, 9, 5, 5));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder());
-        buttonPanel.setOpaque(false);
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                buttonArray[i][j] = new Intersection();
-                buttonPanel.add(buttonArray[i][j]);
-            }
-        }
-
-        mainFrame.add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private void drawState() {
        for (int i = 0; i < boardSize; i++) {
            for (int j = 0; j < boardSize; j++) {
                if (this.gameState[i][j] == 1) {
-                   buttonArray[i][j].setIcon(blackIcon);
-                   buttonArray[i][j].hoverStatus = false;
+                   this.moveButtonBoard.occupyButton(i, j, 1, this.blackStoneIcon);
                }
                else if (this.gameState[i][j] == 2) {
-                   buttonArray[i][j].setIcon(whiteIcon);
-                   buttonArray[i][j].hoverStatus = false;
+                   this.moveButtonBoard.occupyButton(i, j, 2, this.whiteStoneIcon);
                }
                else {
-                   buttonArray[i][j].setIcon(null);
-                   buttonArray[i][j].hoverStatus = true;
+                   this.moveButtonBoard.initButton(i, j);
                }
            }
        }
     }
 
-    private static void updateGameState() {
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                if (buttonArray[i][j].getIcon() == whiteIcon) {
-                    gameState[i][j] = 2;
-                }
-                else if (buttonArray[i][j].getIcon() == blackIcon) {
-                    gameState[i][j] = 1;
-                }
+    private void updateGameState() {
+        int buttonPlayerId;
+        for (int i = 0; i < this.boardSize; i++) {
+            for (int j = 0; j < this.boardSize; j++) {
+                buttonPlayerId = this.moveButtonBoard.get(i, j).getPlayerId();
+                this.gameState[i][j] = (buttonPlayerId != -1) ? buttonPlayerId : 0;
             }
         }
     }
 
-    // UI-Controller communication methods.
    public int[][] getGameState() {
        return this.gameState;
   }
@@ -159,7 +147,7 @@ public class GoUI {
                this.gameState[i][j] = gameState[i][j];
            }
        }
-       drawState();
+       this.drawState();
    }
 
     public void resetGameState() {
@@ -168,71 +156,15 @@ public class GoUI {
                 this.gameState[i][j] = 0;
             }
         }
-        drawState();
+        this.drawState();
     }
 
-    public GoRules.BoardPosition getTurn(int id) {
-        waitingForTurn = true;
-        currentPlayerIcon = (id == 1) ? blackIcon : whiteIcon;
-        while(true) {
-            if (playerPassed) {
-                playerPassed = false;
-                System.out.println("Player passed...");
-                return null;
-            }
-            if (!waitingForTurn) {
-                for(int i = 0; i < boardSize; i++) {
-                    for (int j = 0; j < boardSize; j++) {
-                        if (buttonArray[i][j] == moveButton) {
-                            movePos.setRow(i);
-                            movePos.setCol(j);
-                        }
-                    }
-                }
-
-               return movePos;
-            }
+    public GoRules.BoardPosition getTurn(int playerId) {
+        ImageIcon currentPlayerIcon = (playerId == 1) ? this.blackStoneIcon : this.whiteStoneIcon;
+        if (this.playerPassed) {
+            this.playerPassed = false;
+            return null;
         }
+        return this.moveButtonBoard.getMovePosition(playerId, currentPlayerIcon);
     }
-
-    public class Intersection extends JButton implements MouseListener {
-
-        boolean hoverStatus = true;
-
-        public Intersection() throws IOException {
-            setPreferredSize(new Dimension(60, 60));
-            setBorder(BorderFactory.createEmptyBorder());
-            setContentAreaFilled(false);
-            addMouseListener(this);
-            setVisible(true);
-        }
-
-        public void mouseClicked(MouseEvent e) {
-            hoverStatus = false;
-            moveButton = (JButton)e.getSource();
-            waitingForTurn = false;
-
-        }
-
-        public void mousePressed(MouseEvent e) {
-
-        }
-
-        public void mouseReleased(MouseEvent e) {
-
-        }
-
-        public void mouseEntered(MouseEvent e) {
-            if (hoverStatus == true) {
-                this.setIcon(currentPlayerIcon);
-            }
-        }
-
-        public void mouseExited(MouseEvent e) {
-            if (hoverStatus == true) {
-                this.setIcon(null);
-            }
-        }
-    }
-
 }

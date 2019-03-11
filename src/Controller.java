@@ -1,3 +1,5 @@
+import com.sun.xml.internal.fastinfoset.algorithm.BooleanEncodingAlgorithm;
+
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,12 +11,14 @@ import java.util.List;
  */
 public class Controller {
     int [][] gameState;
+
     public Controller() {
     }
 
     public static void main(String args[]) {
         Controller controller = new Controller();
         GoUI ui = new GoUI(9);
+        ui.initUI();
         GoRules rules = new GoRules();
         GoAI ai = new GoAI(controller, 2, 2);
         GoRules.BoardPosition playerTurn;
