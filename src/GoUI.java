@@ -52,17 +52,16 @@ public class GoUI {
 
             this.mainFrame.add(moveButtonPanel, BorderLayout.SOUTH);
             JMenuBar menuBar = createMenuBar();
-            this.mainFrame.setSize(615, 640);
+            this.mainFrame.setSize(600, 640);
             this.mainFrame.setJMenuBar(menuBar);
             this.mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            this.mainFrame.pack();
             this.mainFrame.setResizable(false);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void initUI(){
+    public void init(){
         // Initialise all clickable move selection buttons.
         this.moveButtonBoard.init();
         for (int i = 0; i < boardSize; i++) {
@@ -111,7 +110,7 @@ public class GoUI {
 
     }
 
-    private void drawState() {
+    public void drawState() {
        for (int i = 0; i < boardSize; i++) {
            for (int j = 0; j < boardSize; j++) {
                if (this.gameState[i][j] == 1) {
@@ -125,6 +124,15 @@ public class GoUI {
                }
            }
        }
+    }
+
+    public void printGameState() {
+        for (int i = 0; i < this.boardSize; i++) {
+            for (int j = 0; j < this.boardSize; j++) {
+                System.out.print(this.gameState[i][j] + " ");
+            }
+            System.out.println();
+        }
     }
 
     private void updateGameState() {
@@ -165,6 +173,13 @@ public class GoUI {
             this.playerPassed = false;
             return null;
         }
-        return this.moveButtonBoard.getMovePosition(playerId, currentPlayerIcon);
+        while(true) {
+            GoRules.BoardPosition move = this.moveButtonBoard.getMovePosition(playerId, currentPlayerIcon);
+            if (GoRules.isValidMove(move, playerId, this.gameState))
+                this.moveButtonBoard.initButton(move.getRow(), move.getCol());
+                this.moveButtonBoard.occupyButton(move.getRow(), move.getCol(), playerId, currentPlayerIcon);
+                this.updateGameState();
+            return move;
+        }
     }
 }

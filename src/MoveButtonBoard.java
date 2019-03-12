@@ -1,13 +1,19 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.nio.Buffer;
 
 public class MoveButtonBoard {
     class Intersection extends JButton implements MouseListener {
         private JButton moveSource = null;
         private boolean occupied = false;
         private int playerId = -1;
+        private BufferedImage blackStoneImg;
+        private ImageIcon blackStoneIcon;
 
         public Intersection() {
             setPreferredSize(new Dimension(60, 60));
@@ -15,6 +21,12 @@ public class MoveButtonBoard {
             setContentAreaFilled(false);
             addMouseListener(this);
             setVisible(true);
+            try {
+                this.blackStoneImg = ImageIO.read(new File("black.png"));
+                this.blackStoneIcon = new ImageIcon(blackStoneImg.getScaledInstance(60, 60, blackStoneImg.SCALE_DEFAULT));
+            } catch (Exception e) {
+
+            }
         }
 
         public JButton getMoveSource() {
@@ -22,9 +34,11 @@ public class MoveButtonBoard {
         }
 
         public void occupy(int playerId, ImageIcon playerIcon) {
-            this.setIcon(playerIcon);
-            this.occupied = true;
-            this.playerId = playerId;
+            if (!this.isOccupied()) {
+                this.setIcon(playerIcon);
+                this.occupied = true;
+                this.playerId = playerId;
+            }
         }
 
         public boolean isOccupied() { return this.occupied; }
@@ -38,9 +52,8 @@ public class MoveButtonBoard {
         }
 
         public void mouseClicked(MouseEvent e) {
+            if (this.isOccupied()) { return; }
             this.moveSource = (JButton)e.getSource();
-            this.occupied = true;
-            this.setIcon(null);
         }
 
         public void mousePressed(MouseEvent e) {
@@ -52,9 +65,15 @@ public class MoveButtonBoard {
         }
 
         public void mouseEntered(MouseEvent e) {
+            if (!this.isOccupied()) {
+                this.setIcon(this.blackStoneIcon);
+            }
         }
 
         public void mouseExited(MouseEvent e) {
+            if (!this.isOccupied()) {
+                this.setIcon(null);
+            }
         }
     }
     private Intersection[][] moveButtons;
@@ -79,7 +98,7 @@ public class MoveButtonBoard {
     public Intersection get(int i, int j) { return this.moveButtons[i][j]; }
 
     public void occupyButton(int i, int j, int playerId, ImageIcon playerIcon) {
-        this.moveButtons[i][i].occupy(playerId, playerIcon);
+        this.moveButtons[i][j].occupy(playerId, playerIcon);
     }
 
     public void initButton(int i, int j) {
@@ -90,8 +109,7 @@ public class MoveButtonBoard {
         while (true) {
             for (int i=0; i<this.moveButtons.length; i++) {
                 for (int j=0; j<this.moveButtons.length; j++) {
-                    if (moveButtons[i][j].getMoveSource() != null && !moveButtons[i][j].isOccupied()) {
-                        moveButtons[i][j].occupy(playerId, playerIcon);
+                    if (moveButtons[i][j].getMoveSource() != null) {
                         return new GoRules.BoardPosition(i, j);
                     }
                 }

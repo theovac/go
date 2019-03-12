@@ -1,9 +1,5 @@
 import com.sun.xml.internal.fastinfoset.algorithm.BooleanEncodingAlgorithm;
-
-import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -18,49 +14,27 @@ public class Controller {
     public static void main(String args[]) {
         Controller controller = new Controller();
         GoUI ui = new GoUI(9);
-        ui.initUI();
+        ui.init();
         GoRules rules = new GoRules();
-        GoAI ai = new GoAI(controller, 2, 2);
-        GoRules.BoardPosition playerTurn;
+        GoAI ai = new GoAI(controller, 2, 1);
+        GoRules.BoardPosition playerMove;
         List<Integer> score;
-        controller.gameState = ui.getGameState();
-        ui.setGameState(controller.gameState);
-        rules.stoneCapture(controller.gameState);
+        rules.stoneCapture(ui.getGameState());
 
-        ui.setGameState(controller.gameState);
         List<GoRules.BoardPosition> capturedWhite = new ArrayList<>();
         List<GoRules.BoardPosition> capturedBlack = new ArrayList<>();
 
-        MonteCarlo.Move aiTurn = null;
+        MonteCarlo.Move aiMove = null;
         while(true) {
-            playerTurn = ui.getTurn(1);
-            boolean possibleKo = (capturedBlack.size() == 1);
-            GoRules.BoardPosition komove = new GoRules.BoardPosition(-1, -1);
-            if (possibleKo && aiTurn != null &&
-                    GoRules.checkCapture(aiTurn.pos, controller.gameState).getLibertyCount() == 1) {
-                komove = GoRules.getConnected(aiTurn.pos, controller.gameState).getLibertyPositions().get(0);
-            }
-            if (playerTurn != null) {
-                if (!(playerTurn.getRow() == komove.getRow() && playerTurn.getCol() == komove.getCol()) &&
-                        GoRules.isValidMove(new GoRules.BoardPosition(playerTurn.getRow(),
-                        playerTurn.getCol()), 1, controller.gameState)) {
-                    controller.gameState[playerTurn.getRow()][playerTurn.getCol()] = 1;
-                    capturedWhite = rules.captureWhite(controller.gameState);
-                    ui.setGameState(controller.gameState);
-                } else {
-                    controller.gameState[playerTurn.getRow()][playerTurn.getCol()] = 0;
-                    ui.setGameState(controller.gameState);
-                    continue;
-                }
-            }
+            System.out.println("Waiting for player turn");
+            playerMove = ui.getTurn(1);
 
-            MonteCarlo mcts = new MonteCarlo(controller.gameState, 2);
-            GoRules.BoardPosition lastBlackMove = null;
-            if (playerTurn != null) {
-                lastBlackMove = new GoRules.BoardPosition(playerTurn.getRow(), playerTurn.getCol());
-            }
-            aiTurn = mcts.getTurn(capturedWhite.size() == 1, lastBlackMove);
-            if (aiTurn == null && playerTurn == null) {
+            System.out.println("Waiting for A.I. turn");
+            MonteCarlo mcts = new MonteCarlo(ui.getGameState(), 2);
+            aiMove = mcts.getTurn(capturedWhite.size() == 1, playerMove);
+
+            // If both players pass score the board.
+            if (aiMove == null && playerMove == null) {
                 score  = mcts.scoreBoard(controller.gameState);
                 if (score.get(0) >= score.get(1)+7) { // Give white an advantage of 7 points because it plays second.
                     System.out.println("Black won!");
@@ -71,10 +45,12 @@ public class Controller {
                 }
                 break;
             }
-            controller.gameState[aiTurn.pos.getRow()][aiTurn.pos.getCol()] = 2;
-            capturedBlack = rules.captureBlack(controller.gameState);
-            ui.setGameState(controller.gameState);
-            score = mcts.scoreBoard(controller.gameState);
+            ui.getGameState()[aiMove.pos.getRow()][aiMove.pos.getCol()] = 2;
+            ui.printGameState();
+            ui.drawState();
+            capturedBlack = rules.captureBlack(ui.getGameState());
+
+            score = mcts.scoreBoard(ui.getGameState());
             System.out.println("Territory: Black(" + score.get(0) + ") - White(" + score.get(1) + ")");
         }
     }
