@@ -16,18 +16,24 @@ public class Controller {
         GoUI ui = new GoUI(9);
         ui.init();
         GoRules rules = new GoRules();
-        GoAI ai = new GoAI(controller, 2, 1);
         GoRules.BoardPosition playerMove;
         List<Integer> score;
-        rules.stoneCapture(ui.getGameState());
 
         List<GoRules.BoardPosition> capturedWhite = new ArrayList<>();
         List<GoRules.BoardPosition> capturedBlack = new ArrayList<>();
+        ui.getGameState()[4][4] = 1;
+        ui.getGameState()[3][4] = 2;
+        ui.getGameState()[4][5] = 2;
+        ui.getGameState()[4][3] = 2;
+        ui.printGameState();
+        ui.drawState();
 
-        MonteCarlo.Move aiMove = null;
+        MonteCarlo.Move aiMove;
         while(true) {
             System.out.println("Waiting for player turn");
             playerMove = ui.getTurn(1);
+            List<GoRules.BoardPosition> capturedStones = rules.capture(ui.getGameState(), 2); // Capture white.
+            ui.drawState();
 
             System.out.println("Waiting for A.I. turn");
             MonteCarlo mcts = new MonteCarlo(ui.getGameState(), 2);
@@ -45,10 +51,11 @@ public class Controller {
                 }
                 break;
             }
+
             ui.getGameState()[aiMove.pos.getRow()][aiMove.pos.getCol()] = 2;
+            capturedBlack = rules.capture(ui.getGameState(), 1);
             ui.printGameState();
             ui.drawState();
-            capturedBlack = rules.captureBlack(ui.getGameState());
 
             score = mcts.scoreBoard(ui.getGameState());
             System.out.println("Territory: Black(" + score.get(0) + ") - White(" + score.get(1) + ")");

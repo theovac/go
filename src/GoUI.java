@@ -72,6 +72,8 @@ public class GoUI {
         this.mainFrame.setVisible(true);
     }
 
+    private void setPlayerPassed() { this.playerPassed = true; }
+
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         JMenu gameTab = new JMenu("Game");
@@ -79,31 +81,16 @@ public class GoUI {
 
         JMenuItem restartButton = new JMenuItem("Restart");
         restartButton.setMnemonic(KeyEvent.VK_R);
-        restartButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetGameState();
-            }
-        });
+        restartButton.addActionListener(e -> this.resetGameState());
         gameTab.add(restartButton);
 
         JMenuItem quitButton = new JMenuItem("Quit");
         quitButton.setMnemonic(KeyEvent.VK_Q);
-        quitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
-            }
-        });
+        quitButton.addActionListener(e -> System.exit(0));
         gameTab.add(quitButton);
 
         JMenuItem passButton = new JMenuItem("Pass");
-        passButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                playerPassed = true;
-            }
-        });
+        passButton.addActionListener(e -> this.setPlayerPassed() );
         menuBar.add(passButton);
 
         return menuBar;
@@ -111,6 +98,7 @@ public class GoUI {
     }
 
     public void drawState() {
+        this.printGameState();
        for (int i = 0; i < boardSize; i++) {
            for (int j = 0; j < boardSize; j++) {
                if (this.gameState[i][j] == 1) {
@@ -145,11 +133,11 @@ public class GoUI {
         }
     }
 
-   public int[][] getGameState() {
-       return this.gameState;
-  }
+    public int[][] getGameState() {
+        return this.gameState;
+    }
 
-   public void setGameState(int[][] gameState) {
+    public void setGameState(int[][] gameState) {
        for (int i = 0; i < boardSize; i++) {
            for (int j = 0; j < boardSize; j++) {
                this.gameState[i][j] = gameState[i][j];
@@ -169,17 +157,21 @@ public class GoUI {
 
     public GoRules.BoardPosition getTurn(int playerId) {
         ImageIcon currentPlayerIcon = (playerId == 1) ? this.blackStoneIcon : this.whiteStoneIcon;
-        if (this.playerPassed) {
-            this.playerPassed = false;
-            return null;
-        }
+        GoRules.BoardPosition move;
         while(true) {
-            GoRules.BoardPosition move = this.moveButtonBoard.getMovePosition(playerId, currentPlayerIcon);
-            if (GoRules.isValidMove(move, playerId, this.gameState))
+            System.out.println(this.playerPassed);
+            if (this.playerPassed) {
+                this.playerPassed = false;
+                break;
+            }
+            move = this.moveButtonBoard.getMovePosition(playerId, currentPlayerIcon);
+            if (move != null && GoRules.isValidMove(move, playerId, this.gameState)) {
                 this.moveButtonBoard.initButton(move.getRow(), move.getCol());
                 this.moveButtonBoard.occupyButton(move.getRow(), move.getCol(), playerId, currentPlayerIcon);
                 this.updateGameState();
-            return move;
+                return move;
+            }
         }
+        return null;
     }
 }

@@ -49,6 +49,7 @@ public class MoveButtonBoard {
             this.playerId = -1;
             this.occupied = false;
             this.moveSource = null;
+            this.setIcon(null);
         }
 
         public void mouseClicked(MouseEvent e) {
@@ -106,15 +107,14 @@ public class MoveButtonBoard {
     }
 
     public GoRules.BoardPosition getMovePosition(int playerId, ImageIcon playerIcon) {
-        while (true) {
-            for (int i=0; i<this.moveButtons.length; i++) {
-                for (int j=0; j<this.moveButtons.length; j++) {
-                    if (moveButtons[i][j].getMoveSource() != null) {
-                        return new GoRules.BoardPosition(i, j);
-                    }
+        for (int i=0; i<this.moveButtons.length; i++) {
+            for (int j=0; j<this.moveButtons.length; j++) {
+                if (moveButtons[i][j].getMoveSource() != null) {
+                    return new GoRules.BoardPosition(i, j);
                 }
             }
         }
+        return null;
     }
 }
 
