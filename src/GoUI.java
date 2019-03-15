@@ -98,7 +98,6 @@ public class GoUI {
     }
 
     public void drawState() {
-        this.printGameState();
        for (int i = 0; i < boardSize; i++) {
            for (int j = 0; j < boardSize; j++) {
                if (this.gameState[i][j] == 1) {
@@ -155,17 +154,18 @@ public class GoUI {
         this.drawState();
     }
 
-    public GoRules.BoardPosition getTurn(int playerId) {
+    public GoRules.BoardPosition getTurn(List<GoRules.BoardPosition> lastCaptured,  int playerId) {
         ImageIcon currentPlayerIcon = (playerId == 1) ? this.blackStoneIcon : this.whiteStoneIcon;
         GoRules.BoardPosition move;
         while(true) {
-            System.out.println(this.playerPassed);
             if (this.playerPassed) {
                 this.playerPassed = false;
                 break;
             }
             move = this.moveButtonBoard.getMovePosition(playerId, currentPlayerIcon);
-            if (move != null && GoRules.isValidMove(move, playerId, this.gameState)) {
+            if (move != null && GoRules.isValidMove(move, playerId, this.gameState) &&
+                            !(lastCaptured.size() == 1 && lastCaptured.get(0).getRow() == move.getRow() && // Avoid Ko
+                            lastCaptured.get(0).getCol() == move.getCol())) {
                 this.moveButtonBoard.initButton(move.getRow(), move.getCol());
                 this.moveButtonBoard.occupyButton(move.getRow(), move.getCol(), playerId, currentPlayerIcon);
                 this.updateGameState();

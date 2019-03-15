@@ -22,22 +22,21 @@ public class Controller {
         List<GoRules.BoardPosition> capturedWhite = new ArrayList<>();
         List<GoRules.BoardPosition> capturedBlack = new ArrayList<>();
         ui.getGameState()[4][4] = 1;
-        ui.getGameState()[3][4] = 2;
         ui.getGameState()[4][5] = 2;
         ui.getGameState()[4][3] = 2;
-        ui.printGameState();
+        ui.getGameState()[5][4] = 2;
         ui.drawState();
 
         MonteCarlo.Move aiMove;
         while(true) {
             System.out.println("Waiting for player turn");
-            playerMove = ui.getTurn(1);
-            List<GoRules.BoardPosition> capturedStones = rules.capture(ui.getGameState(), 2); // Capture white.
+            playerMove = ui.getTurn(capturedBlack, 1);
+            capturedWhite = rules.capture(ui.getGameState(), 2);
             ui.drawState();
 
             System.out.println("Waiting for A.I. turn");
             MonteCarlo mcts = new MonteCarlo(ui.getGameState(), 2);
-            aiMove = mcts.getTurn(capturedWhite.size() == 1, playerMove);
+            aiMove = mcts.getMove(capturedWhite.size() == 1, playerMove);
 
             // If both players pass score the board.
             if (aiMove == null && playerMove == null) {
@@ -54,7 +53,6 @@ public class Controller {
 
             ui.getGameState()[aiMove.pos.getRow()][aiMove.pos.getCol()] = 2;
             capturedBlack = rules.capture(ui.getGameState(), 1);
-            ui.printGameState();
             ui.drawState();
 
             score = mcts.scoreBoard(ui.getGameState());

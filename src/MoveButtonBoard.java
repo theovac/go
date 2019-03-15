@@ -77,6 +77,7 @@ public class MoveButtonBoard {
             }
         }
     }
+
     private Intersection[][] moveButtons;
 
     public MoveButtonBoard(int size) {
