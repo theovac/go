@@ -26,6 +26,7 @@ public class GoRules {
         public List<BoardPosition> getConnectedStones() {
             return this.connectedStones;
         }
+
         public List<BoardPosition> getLibertyPositions() { return this.libertyPositions; }
     }
 
@@ -43,16 +44,16 @@ public class GoRules {
         List<BoardPosition> libertyPositions = new ArrayList<BoardPosition>();
         int libertyCount = 0;
 
-        for (BoardPosition conPos : connectedPositions) {
-            if (conPos.getRow() < gameState.length &&
-                    conPos.getCol() < gameState.length &&
-                    conPos.getRow() >= 0 && conPos.getCol() >= 0) {
+        for (BoardPosition connPos : connectedPositions) {
+            if (connPos.getRow() < gameState.length &&
+                    connPos.getCol() < gameState.length &&
+                    connPos.getRow() >= 0 && connPos.getCol() >= 0) {
                 if (gameState[pos.getRow()][pos.getCol()] != 0 &&
-                        gameState[conPos.getRow()][conPos.getCol()] == gameState[pos.getRow()][pos.getCol()]) {
-                    connectedStones.add(conPos);
-                } else if (gameState[conPos.getRow()][conPos.getCol()] == 0) {
+                        gameState[connPos.getRow()][connPos.getCol()] == gameState[pos.getRow()][pos.getCol()]) {
+                    connectedStones.add(connPos);
+                } else if (gameState[connPos.getRow()][connPos.getCol()] == 0) {
                     libertyCount += 1;
-                    libertyPositions.add(new BoardPosition(conPos.getRow(), conPos.getCol()));
+                    libertyPositions.add(new BoardPosition(connPos.getRow(), connPos.getCol()));
                 }
             }
         }
@@ -78,12 +79,14 @@ public class GoRules {
     }
 
     public static final class CheckCaptureResult {
-        private final int libertyCount;
-        private final List<BoardPosition> stoneGroup;
+        private int libertyCount;
+        private List<BoardPosition> stoneGroup;
+        private BoardPosition atariPos;
 
-        public CheckCaptureResult(int libertyCount, List<BoardPosition> stoneGroup) {
+        public CheckCaptureResult(int libertyCount, List<BoardPosition> stoneGroup, BoardPosition atariPos) {
             this.libertyCount = libertyCount;
             this.stoneGroup = stoneGroup;
+            this.atariPos = atariPos;
         }
 
         public int getLibertyCount() {
@@ -93,6 +96,8 @@ public class GoRules {
         public List<BoardPosition> getStoneGroup() {
             return this.stoneGroup;
         }
+
+        public BoardPosition getAtariPos() { return this.atariPos; }
     }
 
     public static final class BoardPosition {
@@ -126,42 +131,50 @@ public class GoRules {
     /* Performs BFS search to find liberties. If no liberties are found the stone group is captured. */
     public static CheckCaptureResult checkCapture(BoardPosition root, int[][] gameState) {
         int libertyCount = 0;
-        LinkedList<BoardPosition> fifo = new LinkedList<>();
-        List<BoardPosition> visited = new ArrayList<>();
-        BoardPosition current;
-        int colorID = gameState[root.getRow()][root.getCol()];
-        fifo.add(root);
+        BoardPosition atariPos = null;
+        LinkedList<BoardPosition> bfQueue = new LinkedList<>();
+        HashSet<String> visited = new HashSet<>();
+        List<BoardPosition> stoneGroup = new ArrayList<>();
+        BoardPosition currPos;
+        bfQueue.add(root);
 
-        while (!fifo.isEmpty()) {
-            current = fifo.removeFirst();
-            visited.add(current);
-            libertyCount = libertyCount + getConnected(current, gameState).getLibertyCount();
-            for (BoardPosition connected : getConnected(current, gameState).getConnectedStones()) {
-                if (!findBoardPosition(visited, connected)) {
-                    fifo.add(connected);
+        while (!bfQueue.isEmpty()) {
+            currPos = bfQueue.removeFirst();
+            visited.add(""+ currPos.getRow() + currPos.getCol());
+            stoneGroup.add(currPos);
+            GetConnectedResult connStones = getConnected(currPos, gameState);
+            if (connStones.getLibertyCount() == 1) {
+                atariPos = connStones.getLibertyPositions().get(0);
+            }
+            libertyCount = libertyCount + connStones.getLibertyCount();
+            for (BoardPosition connected : getConnected(currPos, gameState).getConnectedStones()) {
+                if (!visited.contains(""+connected.getRow()+connected.getCol())) {
+                    bfQueue.add(connected);
                 }
             }
         }
 
-        return new CheckCaptureResult(libertyCount, visited);
+        if (libertyCount != 1) {
+            return new CheckCaptureResult(libertyCount, stoneGroup, null);
+        } else return new CheckCaptureResult(libertyCount, stoneGroup, atariPos);
     }
 
     /* Checks if a move is valid based on Go rules. */
     public static boolean isValidMove(BoardPosition move, int colorID, int[][] gameState) {
+        /* The position where the player wants to place a stone is empty. */
+        if (gameState[move.getRow()][move.getCol()] != 0) return false;
+
         int[][] nextGameState = new int[gameState.length][gameState.length];
         for (int i = 0; i < gameState.length; i++) {
             for (int j = 0; j < gameState.length; j++) {
                 nextGameState[i][j] = gameState[i][j];
             }
         }
-
-        /* The position where the player wants to place a stone is empty. */
-        if (gameState[move.getRow()][move.getCol()] != 0) return false;
+        nextGameState[move.getRow()][move.getCol()] = colorID;
 
         /* The move does not cause current player's stones to be captured. Allow move if it leads to
         opponent stone capture before player stone capture.
         */
-        nextGameState[move.getRow()][move.getCol()] = colorID;
         List<BoardPosition> adjacentStones = getAdjacent(move, nextGameState);
         if (checkCapture(move, nextGameState).getLibertyCount() == 0) {
             for (BoardPosition stone : adjacentStones) {
